@@ -1,0 +1,26 @@
+{
+  "name": "tautrino-contracts",
+  "version": "1.0.0",
+  "description": "TauTrino smart contracts",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
+    "compile": "truffle compile",
+    "deploy:kovan": "truffle migrate --network kovan",
+    "deploy:mainnet": "truffle migrate --network mainnet",
+    "deploy:kovan-reset": "truffle migrate --reset --network kovan",
+    "deploy:mainnet-reset": "truffle migrate --reset --network mainnet"
+  },
+  "devDependencies": {
+    "@typechain/ethers-v5": "^1.0.0",
+    "truffle": "^5.1.46",
+    "truffle-plugin-verify": "^0.4.0",
+    "typechain": "^2.0.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "3.2.0",
+    "@truffle/hdwallet-provider": "^1.1.0",
+    "ethers": "^5.0.14"
+  }
+}
