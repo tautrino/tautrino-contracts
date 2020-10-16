@@ -8,10 +8,6 @@
         "json": "json(https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd).ethereum.usd"
     },
     {
-        "name": "Kraken",
-        "json": "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0"
-    },
-    {
         "name": "Binance",
         "json": "json(https://api.binance.com/api/v3/avgPrice?symbol=ETHUSDT).price"
     }

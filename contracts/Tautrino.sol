@@ -29,9 +29,8 @@ contract Tautrino {
     RebaseResult private _lastTrinoRebaseResult;
 
 	uint64 private _nextRebaseEpoch;
-	uint64 private _lastRebaseEpoch = 0;
+	uint64 private _lastRebaseEpoch;
 
-    // Since block.timestamp has small differece with human timestamp, we added rebaseOffset
     uint64 public rebaseOffset = 3 minutes;
 
     /**
@@ -44,7 +43,7 @@ contract Tautrino {
         governance = msg.sender;
         tauToken = ITautrinoToken(_tauToken);
         trinoToken = ITautrinoToken(_trinoToken);
-        _nextRebaseEpoch = uint64(block.timestamp % 2**64 - block.timestamp % 3600) + REBASE_CYCLE;
+        _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE;
     }
 
     /**
@@ -53,7 +52,7 @@ contract Tautrino {
      */
 
     function setGovernance(address _governance) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         governance = _governance;
     }
 
@@ -63,7 +62,7 @@ contract Tautrino {
      */
 
     function setPriceManager(address _priceManager) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         priceManager = IPriceManager(_priceManager);
     }
 
@@ -82,7 +81,7 @@ contract Tautrino {
      */
 
     function prepareRebase() external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         priceManager.updatePrice();
     }
 
@@ -91,8 +90,8 @@ contract Tautrino {
      */
 
     function rebase() external {
-        require(msg.sender == governance, "Must be governance!");
-        require(_nextRebaseEpoch <= uint64(block.timestamp % 2**64) + rebaseOffset, "Not ready to rebase!");
+        require(msg.sender == governance, "governance!");
+        require(_nextRebaseEpoch <= uint64(block.timestamp) + rebaseOffset, "Not ready to rebase!");
 
         uint32 _ethPrice = priceManager.averagePrice();
         uint32 _number = _ethPrice;
@@ -122,7 +121,7 @@ contract Tautrino {
             _lastTrinoRebaseResult = RebaseResult.Draw;
         }
 
-        _lastRebaseEpoch = uint64(block.timestamp % 2**64);
+        _lastRebaseEpoch = uint64(block.timestamp);
         _nextRebaseEpoch = _nextRebaseEpoch + 1 hours;
 
         uint _tauTotalSupply = tauToken.rebase(_lastTauRebaseResult);

@@ -31,11 +31,6 @@ contract PriceManager {
     uint32 public lastAvgPrice;
     uint32[] public primeNumbers = [23, 41, 59, 67, 73, 89, 97]; // prime numbers to get random number
 
-    modifier onlyTautrino() {
-        require(msg.sender == tautrino, "Must be tautrino!");
-        _;
-    }
-
     /**
      * @dev Constructor.
      * @param _tautrino Tautrino contract address.
@@ -52,7 +47,7 @@ contract PriceManager {
      */
 
     function setGovernance(address _governance) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         governance = _governance;
     }
 
@@ -62,7 +57,7 @@ contract PriceManager {
      */
 
     function addProvider(address _provider) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         providers.push(IPriceProvider(_provider));
     }
 
@@ -72,7 +67,7 @@ contract PriceManager {
      */
 
     function removeProvider(uint index) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         require(index < providers.length, "index out of bounds");
 
         providers[index].withdraw();
@@ -88,10 +83,11 @@ contract PriceManager {
      * @dev Fetch prices from each price providers.
      */
 
-    function updatePrice() external onlyTautrino{
+    function updatePrice() external {
+        require(msg.sender == tautrino, "tautrino!");
         require(providers.length > 0, "No providers");
 
-        fetchStartTime = uint64(block.timestamp % 2**64);
+        fetchStartTime = uint64(block.timestamp);
 
         for (uint i = 0; i < providers.length; i++) {
             providers[i].fetchPrice();
@@ -111,7 +107,7 @@ contract PriceManager {
             }
         }
 
-        require(fromProvider == true, "Must be provider!");
+        require(fromProvider == true, "provider!");
         payable(msg.sender).transfer(_amount);
     }
 
@@ -124,7 +120,8 @@ contract PriceManager {
      * @return Calculated average price.
      */
 
-    function averagePrice() external onlyTautrino returns (uint32) {
+    function averagePrice() external returns (uint32) {
+        require(msg.sender == tautrino, "tautrino!");
         require(providers.length > 0, "No providers");
 
         uint64 _fetchStartTime = fetchStartTime; // gas savings
@@ -137,7 +134,8 @@ contract PriceManager {
         for (uint i = 0; i < providers.length; i++) {
             uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
             if (_lastUpdatedTime >= _fetchStartTime) { // check if updated correctly
-                uint32 _x = uint32(block.timestamp % uint(primeNumbers[i]));
+                uint32 _x = uint32(uint(keccak256(abi.encodePacked(block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))) % uint(primeNumbers[i]));
+
                 uint32 _price = providers[i].lastPrice();
                 lastPrices.push(Price({
                     provider: providers[i].providerName(),
@@ -157,12 +155,33 @@ contract PriceManager {
     }
 
     /**
+     * @dev Check if price has been updated for next rebase.
+     *
+     * @return Price update status.
+     */
+
+    function priceUpdated() external view returns (bool) {
+        uint64 _fetchStartTime = fetchStartTime; // gas savings
+        if (_fetchStartTime < ITautrino(tautrino).lastRebaseEpoch()) {
+            return false;
+        }
+
+        for (uint i = 0; i < providers.length; i++) {
+            uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
+            if (_lastUpdatedTime >= _fetchStartTime) { // check if updated correctly
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @dev Add new prime number.
      * @param _primeNumber New prime number to add.
      */
 
     function addPrimeNumber(uint32 _primeNumber) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         primeNumbers.push(_primeNumber);
     }
 
@@ -172,7 +191,7 @@ contract PriceManager {
      */
 
     function removePrimeNumber(uint index) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         require(index < primeNumbers.length, "index out of bounds");
 
         if (index < primeNumbers.length - 1) {
@@ -204,7 +223,7 @@ contract PriceManager {
      */
 
     function withdrawAll(address payable _receiver) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
 
         for (uint i = 0; i < providers.length; i++) {
             providers[i].withdraw();

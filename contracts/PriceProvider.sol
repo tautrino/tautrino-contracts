@@ -39,7 +39,7 @@ contract PriceProvider is usingProvable {
      */
 
     function setManager(address _manager) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         manager = _manager;
     }
 
@@ -50,7 +50,7 @@ contract PriceProvider is usingProvable {
 
     function __callback(bytes32 myid, string memory result) public override {
         if (msg.sender != provable_cbAddress()) revert();
-        lastUpdatedTime = uint64(block.timestamp % 2**64);
+        lastUpdatedTime = uint64(block.timestamp);
         lastPriceString = result;
         lastPrice = stringToUint(result);
     }
@@ -60,7 +60,7 @@ contract PriceProvider is usingProvable {
      */
 
     function fetchPrice() external {
-        require(msg.sender == manager, "Must be manager!");
+        require(msg.sender == manager, "manager!");
 
         if (provable_getPrice("URL") > address(this).balance) {
             PriceManagerInterface(manager).payProvableFee(provable_getPrice("URL") + 0.5 ether);
@@ -111,7 +111,7 @@ contract PriceProvider is usingProvable {
      */
 
     function withdraw() external {
-        require(msg.sender == manager, "Must be manager!");
+        require(msg.sender == manager, "manager!");
         payable(manager).transfer(address(this).balance);
     }
 

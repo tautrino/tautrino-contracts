@@ -11,24 +11,14 @@ contract TautrinoToken is ERC20Detailed {
     using SafeMath for uint;
     using Address for address;
 
-	struct Transaction {
-        bool enabled;
-        address destination;
-        bytes data;
-    }
-
-    event TransactionFailed(address indexed destination, uint index, bytes data);
-
     address public governance;
     address public tautrino;
 
     uint private _baseTotalSupply;
-    uint16 private _factor2 = 0;
+    uint16 private _factor2;
 
-    uint64 private _lastRebaseEpoch = 0;
+    uint64 private _lastRebaseEpoch;
     RebaseResult private _lastRebaseResult;
-
-    Transaction[] public transactions;
 
     mapping(address => uint) private _baseBalances;
 	// This is denominated in Fragments, because the gons-fragments conversion might change before
@@ -54,7 +44,7 @@ contract TautrinoToken is ERC20Detailed {
      */
 
     function setGovernance(address _governance) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         governance = _governance;
     }
 
@@ -64,7 +54,7 @@ contract TautrinoToken is ERC20Detailed {
      */
 
     function setTautrino(address _tautrino) external {
-        require(msg.sender == governance, "Must be governance!");
+        require(msg.sender == governance, "governance!");
         tautrino = _tautrino;
     }
 
@@ -74,7 +64,7 @@ contract TautrinoToken is ERC20Detailed {
      */
 
     function rebase(RebaseResult _result) external returns (uint) {
-        require(msg.sender == tautrino, "Must be tautrino!");
+        require(msg.sender == tautrino, "tautrino!");
 
         if (_result == RebaseResult.Win) { // 2x total supply
             _factor2 += 1;
@@ -83,18 +73,7 @@ contract TautrinoToken is ERC20Detailed {
         }
 
         _lastRebaseResult = _result;
-        _lastRebaseEpoch = uint64(block.timestamp % 2**64);
-
-        for (uint i = 0; i < transactions.length; i++) {
-            Transaction storage t = transactions[i];
-            if (t.enabled) {
-                bool result = externalCall(t.destination, t.data);
-                if (!result) {
-                    emit TransactionFailed(t.destination, i, t.data);
-                    revert("Transaction Failed");
-                }
-            }
-        }
+        _lastRebaseEpoch = uint64(block.timestamp);
 
         return totalSupply();
     }
@@ -211,56 +190,6 @@ contract TautrinoToken is ERC20Detailed {
     }
 
     /**
-     * @notice Adds a transaction that gets called for a downstream receiver of rebases
-     * @param destination Address of contract destination
-     * @param data Transaction data payload
-     */
-
-    function addTransaction(address destination, bytes calldata data) external {
-        require(msg.sender == governance, "Must be governance!");
-        transactions.push(Transaction({
-            enabled: true,
-            destination: destination,
-            data: data
-        }));
-    }
-
-    /**
-     * @param index Index of transaction to remove.
-     *              Transaction ordering may have changed since adding.
-     */
-
-    function removeTransaction(uint index) external {
-        require(msg.sender == governance, "Must be governance!");
-        require(index < transactions.length, "index out of bounds");
-
-        if (index < transactions.length - 1) {
-            transactions[index] = transactions[transactions.length - 1];
-        }
-
-        transactions.pop();
-    }
-
-    /**
-     * @param index Index of transaction. Transaction ordering may have changed since adding.
-     * @param enabled True for enabled, false for disabled.
-     */
-
-    function setTransactionEnabled(uint index, bool enabled) external {
-        require(msg.sender == governance, "Must be governance!");
-        require(index < transactions.length, "index must be in range of stored tx list");
-        transactions[index].enabled = enabled;
-    }
-
-    /**
-     * @return Number of transactions, both enabled and disabled, in transactions list.
-     */
-
-    function transactionsSize() external view returns (uint) {
-        return transactions.length;
-    }
-
-    /**
      * @return Last rebase epoch.
      */
 
@@ -282,40 +211,5 @@ contract TautrinoToken is ERC20Detailed {
 
     function factor2() public view returns (uint) {
         return _factor2;
-    }
-
-    /**
-     * @dev wrapper to call the encoded transactions on downstream consumers.
-     * @param destination Address of destination contract.
-     * @param data The encoded data payload.
-     * @return True on success
-     */
-
-    function externalCall(address destination, bytes memory data) internal returns (bool) {
-        bool result;
-        assembly {  // solhint-disable-line no-inline-assembly
-            // "Allocate" memory for output
-            // (0x40 is where "free memory" pointer is stored by convention)
-            let outputAddress := mload(0x40)
-
-            // First 32 bytes are the padded length of data, so exclude that
-            let dataAddress := add(data, 32)
-
-            result := call(
-                // 34710 is the value that solidity is currently emitting
-                // It includes callGas (700) + callVeryLow (3, to pay for SUB)
-                // + callValueTransferGas (9000) + callNewAccountGas
-                // (25000, in case the destination address does not exist and needs creating)
-                sub(gas(), 34710),
-
-                destination,
-                0, // transfer value in wei
-                dataAddress,
-                mload(data),  // Size of the input, in bytes. Stored in position 0 of the array.
-                outputAddress,
-                0  // Output is ignored, therefore the output size is zero
-            )
-        }
-        return result;
     }
 }
