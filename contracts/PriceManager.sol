@@ -5,6 +5,7 @@ interface IPriceProvider {
     function fetchPrice() external;
     function lastPrice() external view returns (uint32);
     function lastUpdatedTime() external view returns (uint64);
+    function isProvable() external view returns (bool);
     function withdraw() external;
 }
 
@@ -52,6 +53,16 @@ contract PriceManager {
     }
 
     /**
+     * @dev Update tautrino.
+     * @param _tautrino The address of tautrino.
+     */
+
+    function setTautrino(address _tautrino) external {
+        require(msg.sender == governance, "governance!");
+        tautrino = _tautrino;
+    }
+
+    /**
      * @dev Add new price provider.
      * @param _provider The address of new provider.
      */
@@ -90,7 +101,9 @@ contract PriceManager {
         fetchStartTime = uint64(block.timestamp);
 
         for (uint i = 0; i < providers.length; i++) {
-            providers[i].fetchPrice();
+            if (providers[i].isProvable()) {
+                providers[i].fetchPrice();
+            }
         }
     }
 

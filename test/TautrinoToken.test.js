@@ -17,14 +17,34 @@ contract('TautrinoToken', async function (accounts) {
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
     tautrino = await Tautrino.deployed();
+  }); 
+
+  describe('Default values', function() {
+    it('Token name', async function() {
+      expect(await tauToken.name()).to.equal(name);
+    });
+
+    it('Token symbol', async function() {
+      expect(await tauToken.symbol()).to.equal(tauSymbol);
+    });
+
+    it('Token decimals', async function() {
+      expect((await tauToken.decimals()).toString()).to.equal(decimals);
+    });
+
+    it('lastRebaseEpoch', async function() {
+      expect((await tauToken.lastRebaseEpoch()).toString()).to.equal('0');
+    });
+
+    it('lastRebaseResult', async function() {
+      expect((await tauToken.lastRebaseResult()).toString()).to.equal('0');
+    });
+
+    it('factor2', async function() {
+      expect((await tauToken.factor2()).toString()).to.equal('0');
+    });
   });
-
-  it('Basic information', async function() {
-    expect(await tauToken.name()).to.equal(name);
-    expect(await tauToken.symbol()).to.equal(tauSymbol);
-    expect((await tauToken.decimals()).toString()).to.equal(decimals);
-  });    
-
+  
   describe('Governance test', function() {
     it('governance', async function() {
       expect((await tauToken.governance()).toString()).to.equal(accounts[0]);
@@ -57,20 +77,6 @@ contract('TautrinoToken', async function (accounts) {
         expect((await tauToken.tautrino()).toString()).to.equal(tautrino.address);
       });
     })
-  });
-
-  describe('Default rebase values', function() {
-    it('lastRebaseEpoch', async function() {
-      expect((await tauToken.lastRebaseEpoch()).toString()).to.equal('0');
-    });
-
-    it('lastRebaseResult', async function() {
-      expect((await tauToken.lastRebaseResult()).toString()).to.equal('0');
-    });
-
-    it('factor2', async function() {
-      expect((await tauToken.factor2()).toString()).to.equal('0');
-    });
   });
 
   describe('ERC20 test', function() {
