@@ -147,7 +147,7 @@ contract PriceManager {
         for (uint i = 0; i < providers.length; i++) {
             uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
             if (_lastUpdatedTime >= _fetchStartTime) { // check if updated correctly
-                uint32 _x = uint32(uint(keccak256(abi.encodePacked(block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))) % uint(primeNumbers[i]));
+                uint32 _x = uint32(uint(keccak256(abi.encodePacked(block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))) % uint(primeNumbers[i])) + 1;
 
                 uint32 _price = providers[i].lastPrice();
                 lastPrices.push(Price({
@@ -165,27 +165,6 @@ contract PriceManager {
 
         lastAvgPrice = _priceSum / _xSum;
         return lastAvgPrice;
-    }
-
-    /**
-     * @dev Check if price has been updated for next rebase.
-     *
-     * @return Price update status.
-     */
-
-    function priceUpdated() external view returns (bool) {
-        uint64 _fetchStartTime = fetchStartTime; // gas savings
-        if (_fetchStartTime < ITautrino(tautrino).lastRebaseEpoch()) {
-            return false;
-        }
-
-        for (uint i = 0; i < providers.length; i++) {
-            uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
-            if (_lastUpdatedTime >= _fetchStartTime) { // check if updated correctly
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

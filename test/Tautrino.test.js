@@ -1,10 +1,11 @@
 const { catchRevert }  = require("./exceptionsHelpers.js");
 const { expect } = require('chai');
+require("./utils");
 
 const Tautrino = artifacts.require('Tautrino');
 const TautrinoToken = artifacts.require('TautrinoToken');
 const PriceManager = artifacts.require('PriceManager');
-const PriceProvider = artifacts.require('PriceProvider');
+const PriceProviderChainLink = artifacts.require('PriceProviderChainLink');
 
 contract('Tautrino', async function (accounts) {
   const tauSymbol = "TAU";
@@ -15,6 +16,7 @@ contract('Tautrino', async function (accounts) {
   let trinoToken;
   let tautrino;
   let priceManager;
+  let nextRebaseTime;
 
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
@@ -24,13 +26,15 @@ contract('Tautrino', async function (accounts) {
 
     await tauToken.setTautrino(tautrino.address, { from: accounts[0]});
     await trinoToken.setTautrino(tautrino.address, { from: accounts[0]});
+
+    priceProviderChainLink = await PriceProviderChainLink.new("0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", priceManager.address);
   });
 
   describe('Default values', function() {
     it('nextRebaseEpoch', async function() {
       const now = Date.now() / 1000;
-      const nextRebase = now - now % 3600 + 3600;
-      expect((await tautrino.nextRebaseEpoch()).toString()).to.equal(nextRebase.toString());
+      nextRebaseTime = now - now % 3600 + 3600;
+      expect((await tautrino.nextRebaseEpoch()).toString()).to.equal(nextRebaseTime.toString());
     });
 
     it('lastRebaseEpoch', async function() {
@@ -81,4 +85,54 @@ contract('Tautrino', async function (accounts) {
       expect((await tautrino.rebaseOffset()).toString()).to.equal('240');
     });
   });
+
+  describe('Governance test', function() {
+    it('governance', async function() {
+      expect((await tautrino.governance()).toString()).to.equal(accounts[0]);
+    });
+
+    describe('setGovernance', function() {
+      it('should update governance', async function() {
+        await tautrino.setGovernance(accounts[1], { from: accounts[0]});
+        expect((await tautrino.governance()).toString()).to.equal(accounts[1]);
+      });
+
+      it('revert to update governance from non-governance', async function() {
+        await catchRevert(tautrino.setGovernance(accounts[2], {from: accounts[0]}));
+      });
+    })
+  });
+  describe('prepareRebase', function() {
+    it('revert to prepare rebase from non-governance', async function() {
+      await catchRevert(tautrino.prepareRebase({from: accounts[0]}));
+    });
+
+    it('should prepare rebase', async function() {
+      await priceManager.addProvider(priceProviderChainLink.address, {from: accounts[0]})
+
+      await tautrino.prepareRebase({from: accounts[1]})
+    });
+  });
+
+  // describe('Rebase', function() {
+  //   it('revert to rebase from non-governance', async function() {
+  //     await catchRevert(tautrino.rebase({from: accounts[0]}));
+  //   });
+
+  //   it('revert to rebase when executed before next rebase time', async function() {
+  //     await catchRevert(tautrino.rebase({from: accounts[1]}));
+  //   });
+
+  //   it('should rebase', async function() {
+  //     const now = Date.now() / 1000;
+  //     await advanceTime(nextRebaseTime - now);
+  //     await tautrino.rebase({from: accounts[1]});
+      
+  //     const lastPrice = (await priceManager.averagePrice({from: accounts[1]})).toString()
+  //     expect(lastPrice).to.not.equal('0');
+
+  //     expect((await priceManager.lastPricesSize()).toString()).to.equal('1');
+  //     expect((await priceManager.lastAvgPrice()).toString()).to.equal(lastPrice);
+  //   });
+  // });
 });
