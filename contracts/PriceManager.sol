@@ -28,7 +28,7 @@ contract PriceManager {
     IPriceProvider[] public providers;
     Price[] public lastPrices;
 
-    uint64 private fetchStartTime;
+    uint64 private fetchStartTime = 1;
     uint32 public lastAvgPrice;
     uint32[] public primeNumbers = [23, 41, 59, 67, 73, 89, 97]; // prime numbers to get random number
 

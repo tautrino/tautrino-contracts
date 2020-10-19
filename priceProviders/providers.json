@@ -6,9 +6,5 @@
     {
         "name": "CoinGecko",
         "json": "json(https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd).ethereum.usd"
-    },
-    {
-        "name": "Binance",
-        "json": "json(https://api.binance.com/api/v3/avgPrice?symbol=ETHUSDT).price"
     }
 ]

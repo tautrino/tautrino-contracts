@@ -1,0 +1,45 @@
+# Tautrino
+
+There is no official mainnet addresses for now.
+
+## Table of Contents
+
+- [Install](#install)
+- [Testing](#testing)
+- [Testnets](#testnets)
+- [Contribute](#contribute)
+
+
+## Install
+
+```bash
+# Install project dependencies
+yarn add
+
+# Install ethereum local blockchain(s) and associated dependencies
+yarn setup-local-chain
+```
+
+## Testing
+
+``` bash
+# You can use the following command to start a local blockchain instance
+npx start-chain [ganacheUnitTest|gethUnitTest]
+
+# Run all unit tests
+yarn test
+
+## Testnets
+There is a testnet deployment on Kovan. It rebases hourly using real market data.
+- TAU ERC-20 token: [0x4660f13836066280e1ca081bbb6f64a56948c531](https://kovan.etherscan.io/address/0x4660f13836066280e1ca081bbb6f64a56948c531)
+- TRINO ERC-20 token: [0x8247ccb509f3f7468de6cc200ffea8dbd2d137d3](https://kovan.etherscan.io/address/0x8247ccb509f3f7468de6cc200ffea8dbd2d137d3)
+- Tautrino: [0xee6ae37755a492a6a9e1d78456522ea56bf54fa8](https://kovan.etherscan.io/address/0xee6ae37755a492a6a9e1d78456522ea56bf54fa8)
+- PriceManager: [0xc1fe95d5795bac53149acad57f0a7c470ccb918d](https://etherscan.io/address/0xc1fe95d5795bac53149acad57f0a7c470ccb918d)
+- Coinbase Price provider: [0xc16F4391F339Bc02430EA4b1B617b4d795364Ea0](https://etherscan.io/address/0xc16F4391F339Bc02430EA4b1B617b4d795364Ea0)
+- Coingecko Price provider: [0x1150083a26F223a638947C6C9fA69629db701539](https://etherscan.io/address/0x1150083a26F223a638947C6C9fA69629db701539)
+- ChainLink Price provider: [0x12d40F6581098D1A44436123f67Af3F8Ef51B5dC](https://etherscan.io/address/0x12d40F6581098D1A44436123f67Af3F8Ef51B5dC)
+
+## Contribute
+
+To report bugs within this package, create an issue in this repository.
+For security issues, please contact mendeleev.dmitri@mail.ru.
