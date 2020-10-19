@@ -7,10 +7,12 @@
   "scripts": {
     "generate-types": "typechain --target=ethers-v5 'build/contracts/*.json'",
     "compile": "truffle compile",
-    "deploy:kovan": "truffle migrate --network kovan",
-    "deploy:mainnet": "truffle migrate --network mainnet",
-    "deploy:kovan-reset": "truffle migrate --reset --network kovan",
-    "deploy:mainnet-reset": "truffle migrate --reset --network mainnet"
+    "deploy:test": "truffle migrate --reset --network test --skip-dry-run",
+    "deploy:kovan": "truffle migrate --reset --network kovan",
+    "deploy:mainnet": "truffle migrate --reset --network mainnet",
+    "fork": "ganache-cli --fork wss://mainnet.infura.io/ws/v3/9daf22675c4f410292911cbf43239bb0 --account='PRIVATE_KEY=bd6592b3251b91669d3f2df5065cbe3c66a85e1e4704261221ca332c58303418,1000000000000000000000' --account='PRIVATE_KEY=610630c378563c1c12a4f4ad705e59bd5b9e3b6daa5e9409c0fd29ae188d8596,1000000000000000000000'  --account='PRIVATE_KEY=10727a55fb7ab84bd16a3bbe92a08825564e1e4100aa893f5d5e1fbaa5d7ad27,1000000000000000000000'",
+    "test": "./scripts/test.sh --network ganache",
+    "test-integration": "bash -x test-integration/run-all.sh"
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^1.0.0",
@@ -21,6 +23,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "3.2.0",
     "@truffle/hdwallet-provider": "^1.1.0",
+    "chai": "^4.2.0",
     "ethers": "^5.0.14"
   }
 }
