@@ -138,7 +138,6 @@ contract PriceManager {
         require(providers.length > 0, "No providers");
 
         uint64 _fetchStartTime = fetchStartTime; // gas savings
-        require(_fetchStartTime >= ITautrino(tautrino).lastRebaseEpoch(), "Price not updated yet");
 
         delete lastPrices;
         uint32 _priceSum = 0;

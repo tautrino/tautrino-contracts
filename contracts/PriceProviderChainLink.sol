@@ -25,13 +25,4 @@ contract PriceProviderChainLink is PriceProvider {
         require(timeStamp > 0, "Round not complete");
         return uint32(price / 1000000);
     }
-
-    /**
-     * @return Last price updated time.
-     */
-
-    function lastUpdatedTime() public override view returns (uint64) {
-        (,,,uint timeStamp,) = priceFeed.latestRoundData();
-        return uint64(timeStamp);
-    }
 }
