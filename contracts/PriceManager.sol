@@ -28,7 +28,6 @@ contract PriceManager {
     IPriceProvider[] public providers;
     Price[] public lastPrices;
 
-    uint64 private fetchStartTime = 1;
     uint32 public lastAvgPrice;
     uint32[] public primeNumbers = [23, 41, 59, 67, 73, 89, 97]; // prime numbers to get random number
 
@@ -98,8 +97,6 @@ contract PriceManager {
         require(msg.sender == tautrino, "tautrino!");
         require(providers.length > 0, "No providers");
 
-        fetchStartTime = uint64(block.timestamp);
-
         for (uint i = 0; i < providers.length; i++) {
             if (providers[i].isProvable()) {
                 providers[i].fetchPrice();
@@ -137,7 +134,7 @@ contract PriceManager {
         require(msg.sender == tautrino, "tautrino!");
         require(providers.length > 0, "No providers");
 
-        uint64 _fetchStartTime = fetchStartTime; // gas savings
+        uint64 _lastRebaseTime = ITautrino(tautrino).lastRebaseEpoch();
 
         delete lastPrices;
         uint32 _priceSum = 0;
@@ -145,7 +142,7 @@ contract PriceManager {
 
         for (uint i = 0; i < providers.length; i++) {
             uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
-            if (_lastUpdatedTime >= _fetchStartTime) { // check if updated correctly
+            if (_lastUpdatedTime >= _lastRebaseTime) { // check if updated correctly
                 uint32 _x = uint32(uint(keccak256(abi.encodePacked(block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))) % uint(primeNumbers[i])) + 1;
 
                 uint32 _price = providers[i].lastPrice();
