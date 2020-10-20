@@ -61,10 +61,11 @@ contract PriceProviderProvable is usingProvable, PriceProvider {
         uint _requiredFee = provable_getPrice("URL");
         if (_requiredFee > address(this).balance) {
             uint _provableFee = _requiredFee + 0.5 ether;
-            if (manager.balance < _provableFee && manager.balance >= _requiredFee) {
-                _provableFee = _requiredFee;
-            } else {
+            if (manager.balance < _requiredFee) {
                 return;
+            }
+            if (manager.balance < _provableFee) {
+                _provableFee = _requiredFee;
             }
 
             PriceManagerInterface(manager).payProvableFee(provable_getPrice("URL") + 0.5 ether);
