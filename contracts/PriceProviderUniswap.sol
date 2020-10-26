@@ -2,14 +2,15 @@ pragma solidity ^0.6.6;
 
 import './PriceProvider.sol';
 import './ERC20Detailed.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
-import '@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol';
-import '@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol';
+import './uniswap/FixedPoint.sol';
+import './uniswap/IUniswapV2Pair.sol';
+import './uniswap/UniswapV2OracleLibrary.sol';
+import './uniswap/UniswapV2Library.sol';
 
 contract PriceProviderUniswap is PriceProvider {
 
     using FixedPoint for *;
+    using SafeMath for uint;
 
     IUniswapV2Pair public immutable pair;
 
@@ -27,7 +28,7 @@ contract PriceProviderUniswap is PriceProvider {
      * @param _manager Address of price manager.
      */
 
-    constructor(address _manager, address _factory, address _weth, address _stableToken) public PriceProvider("Uniswap", _manager, false) {
+    constructor(address _manager, address _factory, address _weth, address _stableToken) public PriceProvider("Uniswap", _manager, true) {
         IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(_factory, _weth, _stableToken));
         pair = _pair;
         weth = _weth;
@@ -47,7 +48,8 @@ contract PriceProviderUniswap is PriceProvider {
         (,,blockTimestampLast) = _pair.getReserves();
     }
 
-    function update() public {
+    function update() external {
+        require(msg.sender == manager, "manager!");
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
@@ -71,7 +73,7 @@ contract PriceProviderUniswap is PriceProvider {
 
     function lastPrice() public override view returns (uint32) {
         uint amountOut = priceAverage.mul(1 ether).decode144();
-        uint32 price = uint32(amountOut / (10 ** uint(ERC20Detailed(stableToken).decimals() - decimals)));
+        uint32 price = uint32(amountOut.div(10 ** uint(ERC20Detailed(stableToken).decimals() - decimals)));
         return price;
     }
 }

@@ -36,19 +36,19 @@ contract('PriceManager', async function (accounts) {
     });
   });
 
-  describe('Governance test', function() {
-    it('governance', async function() {
-      expect((await priceManager.governance()).toString()).to.equal(accounts[0]);
+  describe('Ownership test', function() {
+    it('owner', async function() {
+      expect((await priceManager.owner()).toString()).to.equal(accounts[0]);
     });
 
-    describe('setGovernance', function() {
-      it('should update governance', async function() {
-        await priceManager.setGovernance(accounts[1], { from: accounts[0]});
-        expect((await priceManager.governance()).toString()).to.equal(accounts[1]);
+    describe('transferOwnership', function() {
+      it('should update owner', async function() {
+        await priceManager.transferOwnership(accounts[1], { from: accounts[0]});
+        expect((await priceManager.owner()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update governance from non-governance', async function() {
-        await catchRevert(priceManager.setGovernance(accounts[2], {from: accounts[0]}));
+      it('revert to update owner from non-owner', async function() {
+        await catchRevert(priceManager.transferOwnership(accounts[2], {from: accounts[0]}));
       });
     })
   });
@@ -59,7 +59,7 @@ contract('PriceManager', async function (accounts) {
     });
 
     describe('setTautrino', function() {
-      it('revert to update tautrino from non-governance', async function() {
+      it('revert to update tautrino from non-owner', async function() {
         await catchRevert(priceManager.setTautrino(accounts[2], {from: accounts[0]}));
       });
 
@@ -75,7 +75,7 @@ contract('PriceManager', async function (accounts) {
       expect((await priceManager.providerSize()).toString()).to.equal('0');
     });
 
-    it('revert to add provider from non-governance', async function() {
+    it('revert to add provider from non-owner', async function() {
       await catchRevert(priceManager.addProvider(priceProviderChainLink.address, {from: accounts[0]}));
     });
 
@@ -86,7 +86,7 @@ contract('PriceManager', async function (accounts) {
   });
 
   describe('removeProvider', function() {
-    it('revert to remove provider from non-governance', async function() {
+    it('revert to remove provider from non-owner', async function() {
       await catchRevert(priceManager.removeProvider(0, {from: accounts[0]}));
     });
 

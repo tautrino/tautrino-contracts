@@ -5,15 +5,9 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 interface IPriceProvider {
     function providerName() external view returns (string memory);
-    function fetchPrice() external;
+    function update() external;
     function lastPrice() external view returns (uint32);
-    function lastUpdatedTime() external view returns (uint64);
-    function isProvable() external view returns (bool);
-    function withdraw() external;
-}
-
-interface ITautrino {
-    function lastRebaseEpoch() external view returns (uint64);
+    function updateRequred() external view returns (bool);
 }
 
 contract PriceManager is Ownable {
@@ -59,7 +53,11 @@ contract PriceManager is Ownable {
      */
 
     function addProvider(address _provider) external onlyOwner {
-        providers.push(IPriceProvider(_provider));
+        IPriceProvider _newProvider = IPriceProvider(_provider);
+        if (_newProvider.updateRequred()) {
+            _newProvider.update();
+        }
+        providers.push(_newProvider);
     }
 
     /**
@@ -70,45 +68,11 @@ contract PriceManager is Ownable {
     function removeProvider(uint index) external onlyOwner {
         require(index < providers.length, "index out of bounds");
 
-        providers[index].withdraw();
-
         if (index < providers.length - 1) {
             providers[index] = providers[providers.length - 1];
         }
 
         providers.pop();
-    }
-
-    /**
-     * @dev Fetch prices from each price providers.
-     */
-
-    function updatePrice() external {
-        require(msg.sender == tautrino, "tautrino!");
-        require(providers.length > 0, "No providers");
-
-        for (uint i = 0; i < providers.length; i++) {
-            if (providers[i].isProvable()) {
-                providers[i].fetchPrice();
-            }
-        }
-    }
-
-    /**
-     * @dev Pay fee for fetching price.
-     */
-
-    function payProvableFee(uint _amount) external {
-        bool fromProvider = false;
-        for (uint i = 0; i < providers.length; i++) {
-            if (msg.sender == address(providers[i])) {
-                fromProvider = true;
-                break;
-            }
-        }
-
-        require(fromProvider == true, "provider!");
-        payable(msg.sender).transfer(_amount);
     }
 
     /**
@@ -124,32 +88,30 @@ contract PriceManager is Ownable {
         require(msg.sender == tautrino, "tautrino!");
         require(providers.length > 0, "No providers");
 
-        uint64 _lastRebaseTime = ITautrino(tautrino).lastRebaseEpoch();
-
         delete lastPrices;
         uint _priceSum = 0;
-        uint32 _xSum = 0;
+        uint _xSum = 0;
 
         for (uint i = 0; i < providers.length; i++) {
-            uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
-            if (_lastUpdatedTime >= _lastRebaseTime) { // check if updated correctly
-                uint32 _price = providers[i].lastPrice();
-                uint32 _x = uint32(uint(keccak256(abi.encodePacked(_price, block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))).mod(uint(primeNumbers[i]))) + 1;
-
-                lastPrices.push(Price({
-                    provider: providers[i].providerName(),
-                    timestamp: _lastUpdatedTime,
-                    price: _price,
-                    x: _x
-                }));
-                _priceSum += uint(_price).mul(uint(_x));
-                _xSum += _x;
+            if (providers[i].updateRequred()) {
+                providers[i].update();
             }
+            uint32 _price = providers[i].lastPrice();
+            uint _x = uint(keccak256(abi.encodePacked(_price, block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))).mod(uint(primeNumbers[i])) + 1;
+
+            lastPrices.push(Price({
+                provider: providers[i].providerName(),
+                timestamp: uint64(block.timestamp),
+                price: _price,
+                x: uint32(_x)
+            }));
+            _priceSum += uint(_price).mul(_x);
+            _xSum += _x;
         }
 
         require(_priceSum > 0, "Price is not updated yet");
 
-        lastAvgPrice = uint32(_priceSum.div(uint(_xSum)));
+        lastAvgPrice = uint32(_priceSum.div(_xSum));
         return lastAvgPrice;
     }
 
@@ -191,26 +153,5 @@ contract PriceManager is Ownable {
 
     function lastPricesSize() external view returns (uint) {
         return lastPrices.length;
-    }
-
-    /**
-     * @dev Withdraw all eth balance. Used to migrate to another price manager.
-     * @param _receiver Withdraw address.
-     */
-
-    function withdrawAll(address payable _receiver) external onlyOwner {
-
-        for (uint i = 0; i < providers.length; i++) {
-            providers[i].withdraw();
-        }
-
-        _receiver.transfer(address(this).balance);
-    }
-
-    /**
-     * @dev Receive Ether function.
-     */
-
-    receive() external payable {
     }
 }

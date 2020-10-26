@@ -61,7 +61,7 @@ contract('Tautrino', async function (accounts) {
       expect((await tautrino.priceManager()).toString()).to.equal(zeroAddress);
     });
 
-    it('revert to update priceManager from non-governance', async function() {
+    it('revert to update priceManager from non-owner', async function() {
       await catchRevert(tautrino.setPriceManager(priceManager.address, {from: accounts[1]}));
     });
 
@@ -76,7 +76,7 @@ contract('Tautrino', async function (accounts) {
       expect((await tautrino.rebaseOffset()).toString()).to.equal('180');
     });
 
-    it('revert to update rebaseOffset from non-governance', async function() {
+    it('revert to update rebaseOffset from non-owner', async function() {
       await catchRevert(tautrino.setRebaseOffset('240', {from: accounts[1]}));
     });
 
@@ -86,36 +86,25 @@ contract('Tautrino', async function (accounts) {
     });
   });
 
-  describe('Governance test', function() {
-    it('governance', async function() {
-      expect((await tautrino.governance()).toString()).to.equal(accounts[0]);
+  describe('Ownership test', function() {
+    it('owner', async function() {
+      expect((await tautrino.owner()).toString()).to.equal(accounts[0]);
     });
 
-    describe('setGovernance', function() {
-      it('should update governance', async function() {
-        await tautrino.setGovernance(accounts[1], { from: accounts[0]});
-        expect((await tautrino.governance()).toString()).to.equal(accounts[1]);
+    describe('transferOwnership', function() {
+      it('should update owner', async function() {
+        await tautrino.transferOwnership(accounts[1], { from: accounts[0]});
+        expect((await tautrino.owner()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update governance from non-governance', async function() {
-        await catchRevert(tautrino.setGovernance(accounts[2], {from: accounts[0]}));
+      it('revert to update owner from non-owner', async function() {
+        await catchRevert(tautrino.transferOwnership(accounts[2], {from: accounts[0]}));
       });
     })
   });
-  describe('prepareRebase', function() {
-    it('revert to prepare rebase from non-governance', async function() {
-      await catchRevert(tautrino.prepareRebase({from: accounts[0]}));
-    });
-
-    it('should prepare rebase', async function() {
-      await priceManager.addProvider(priceProviderChainLink.address, {from: accounts[0]})
-
-      await tautrino.prepareRebase({from: accounts[1]})
-    });
-  });
 
   // describe('Rebase', function() {
-  //   it('revert to rebase from non-governance', async function() {
+  //   it('revert to rebase from non-owner', async function() {
   //     await catchRevert(tautrino.rebase({from: accounts[0]}));
   //   });
 

@@ -45,19 +45,19 @@ contract('TautrinoToken', async function (accounts) {
     });
   });
   
-  describe('Governance test', function() {
-    it('governance', async function() {
-      expect((await tauToken.governance()).toString()).to.equal(accounts[0]);
+  describe('Ownership test', function() {
+    it('owner', async function() {
+      expect((await tauToken.owner()).toString()).to.equal(accounts[0]);
     });
 
-    describe('setGovernance', function() {
-      it('should update governance', async function() {
-        await tauToken.setGovernance(accounts[1], { from: accounts[0]});
-        expect((await tauToken.governance()).toString()).to.equal(accounts[1]);
+    describe('transferOwnership', function() {
+      it('should update owner', async function() {
+        await tauToken.transferOwnership(accounts[1], { from: accounts[0]});
+        expect((await tauToken.owner()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update governance from non-governance', async function() {
-        await catchRevert(tauToken.setGovernance(accounts[2], {from: accounts[0]}));
+      it('revert to update owner from non-owner', async function() {
+        await catchRevert(tauToken.transferOwnership(accounts[2], {from: accounts[0]}));
       });
     })
   });
@@ -68,7 +68,7 @@ contract('TautrinoToken', async function (accounts) {
     });
 
     describe('setTautrino', function() {
-      it('revert to update tautrino from non-governance', async function() {
+      it('revert to update tautrino from non-owner', async function() {
         await catchRevert(tauToken.setTautrino(tautrino.address, {from: accounts[0]}));
       });
 

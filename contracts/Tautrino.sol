@@ -6,7 +6,6 @@ import "./RebaseResult.sol";
 interface IPriceManager {
     function averagePrice() external returns (uint32);
     function lastAvgPrice() external view returns (uint32);
-    function updatePrice() external;
 }
 
 interface ITautrinoToken {
@@ -63,14 +62,6 @@ contract Tautrino is Ownable {
     }
 
     /**
-     * @dev Prepare rebase - update price of price manager.
-     */
-
-    function prepareRebase() external onlyOwner {
-        priceManager.updatePrice();
-    }
-
-    /**
      * @dev Rebase TAU and TRINO tokens.
      */
 
@@ -115,7 +106,7 @@ contract Tautrino is Ownable {
     }
 
     /**
-     * @return Price of eth which used for last rebasing.
+     * @return Price of eth used for last rebasing.
      */
 
     function lastAvgPrice() public view returns (uint32) {
