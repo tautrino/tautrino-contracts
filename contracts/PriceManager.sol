@@ -1,4 +1,7 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.6;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 interface IPriceProvider {
     function providerName() external view returns (string memory);
@@ -13,7 +16,9 @@ interface ITautrino {
     function lastRebaseEpoch() external view returns (uint64);
 }
 
-contract PriceManager {
+contract PriceManager is Ownable {
+
+    using SafeMath for uint;
 
     struct Price {
         string provider; // ex. CoinGecko, CoinMarketCap, ...
@@ -22,7 +27,6 @@ contract PriceManager {
         uint32 x;
     }
 
-    address public governance;
     address public tautrino;
 
     IPriceProvider[] public providers;
@@ -36,19 +40,8 @@ contract PriceManager {
      * @param _tautrino Tautrino contract address.
      */
 
-    constructor(address _tautrino) public {
-        governance = msg.sender;
+    constructor(address _tautrino) public Ownable() {
         tautrino = _tautrino;
-    }
-
-    /**
-     * @dev Set governance.
-     * @param _governance The address of new governance.
-     */
-
-    function setGovernance(address _governance) external {
-        require(msg.sender == governance, "governance!");
-        governance = _governance;
     }
 
     /**
@@ -56,8 +49,7 @@ contract PriceManager {
      * @param _tautrino The address of tautrino.
      */
 
-    function setTautrino(address _tautrino) external {
-        require(msg.sender == governance, "governance!");
+    function setTautrino(address _tautrino) external onlyOwner {
         tautrino = _tautrino;
     }
 
@@ -66,8 +58,7 @@ contract PriceManager {
      * @param _provider The address of new provider.
      */
 
-    function addProvider(address _provider) external {
-        require(msg.sender == governance, "governance!");
+    function addProvider(address _provider) external onlyOwner {
         providers.push(IPriceProvider(_provider));
     }
 
@@ -76,8 +67,7 @@ contract PriceManager {
      * @param index Index of provider to remove.
      */
 
-    function removeProvider(uint index) external {
-        require(msg.sender == governance, "governance!");
+    function removeProvider(uint index) external onlyOwner {
         require(index < providers.length, "index out of bounds");
 
         providers[index].withdraw();
@@ -137,29 +127,29 @@ contract PriceManager {
         uint64 _lastRebaseTime = ITautrino(tautrino).lastRebaseEpoch();
 
         delete lastPrices;
-        uint32 _priceSum = 0;
+        uint _priceSum = 0;
         uint32 _xSum = 0;
 
         for (uint i = 0; i < providers.length; i++) {
             uint64 _lastUpdatedTime = providers[i].lastUpdatedTime();
             if (_lastUpdatedTime >= _lastRebaseTime) { // check if updated correctly
-                uint32 _x = uint32(uint(keccak256(abi.encodePacked(block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))) % uint(primeNumbers[i])) + 1;
-
                 uint32 _price = providers[i].lastPrice();
+                uint32 _x = uint32(uint(keccak256(abi.encodePacked(_price, block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))).mod(uint(primeNumbers[i]))) + 1;
+
                 lastPrices.push(Price({
                     provider: providers[i].providerName(),
                     timestamp: _lastUpdatedTime,
                     price: _price,
                     x: _x
                 }));
-                _priceSum += _price * _x;
+                _priceSum += uint(_price).mul(uint(_x));
                 _xSum += _x;
             }
         }
 
         require(_priceSum > 0, "Price is not updated yet");
 
-        lastAvgPrice = _priceSum / _xSum;
+        lastAvgPrice = uint32(_priceSum.div(uint(_xSum)));
         return lastAvgPrice;
     }
 
@@ -168,8 +158,7 @@ contract PriceManager {
      * @param _primeNumber New prime number to add.
      */
 
-    function addPrimeNumber(uint32 _primeNumber) external {
-        require(msg.sender == governance, "governance!");
+    function addPrimeNumber(uint32 _primeNumber) external onlyOwner {
         primeNumbers.push(_primeNumber);
     }
 
@@ -178,8 +167,7 @@ contract PriceManager {
      * @param index Index to remove.
      */
 
-    function removePrimeNumber(uint index) external {
-        require(msg.sender == governance, "governance!");
+    function removePrimeNumber(uint index) external onlyOwner {
         require(index < primeNumbers.length, "index out of bounds");
 
         if (index < primeNumbers.length - 1) {
@@ -210,8 +198,7 @@ contract PriceManager {
      * @param _receiver Withdraw address.
      */
 
-    function withdrawAll(address payable _receiver) external {
-        require(msg.sender == governance, "governance!");
+    function withdrawAll(address payable _receiver) external onlyOwner {
 
         for (uint i = 0; i < providers.length; i++) {
             providers[i].withdraw();

@@ -1,21 +1,22 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.6;
 
-import "./ERC20Detailed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ERC20Detailed.sol";
+import "./RebaseResult.sol";
 
-enum RebaseResult { Win, Lose, Draw }
-
-contract TautrinoToken is ERC20Detailed {
+contract TautrinoToken is ERC20Detailed, Ownable {
 
     using SafeMath for uint;
     using Address for address;
 
-    address public governance;
+    event LogTokenRebase(uint64 epoch, RebaseResult result, uint totalSupply);
+
     address public tautrino;
 
     uint private _baseTotalSupply;
-    uint16 private _factor2;
+    uint256 private _factor2;
 
     uint64 private _lastRebaseEpoch;
     RebaseResult private _lastRebaseResult;
@@ -30,22 +31,11 @@ contract TautrinoToken is ERC20Detailed {
      * @param symbol symbol of token - TAU or TRINO.
      */
 
-    constructor(string memory symbol) public ERC20Detailed("Tautrino", symbol, 18) {
-        governance = msg.sender;
-        _baseTotalSupply = 300 * 10**uint(decimals());
+    constructor(string memory symbol) public ERC20Detailed("Tautrino", symbol, 18) Ownable() {
+        _baseTotalSupply = 300 * (10**uint(decimals()));
         _baseBalances[msg.sender] = totalSupply();
         _factor2 = 0;
         emit Transfer(address(0x0), msg.sender, totalSupply());
-    }
-
-    /**
-     * @dev Set governance.
-     * @param _governance The address of new governance.
-     */
-
-    function setGovernance(address _governance) external {
-        require(msg.sender == governance, "governance!");
-        governance = _governance;
     }
 
     /**
@@ -53,8 +43,7 @@ contract TautrinoToken is ERC20Detailed {
      * @param _tautrino The address of tautrino.
      */
 
-    function setTautrino(address _tautrino) external {
-        require(msg.sender == governance, "governance!");
+    function setTautrino(address _tautrino) external onlyOwner {
         tautrino = _tautrino;
     }
 
@@ -75,7 +64,10 @@ contract TautrinoToken is ERC20Detailed {
         _lastRebaseResult = _result;
         _lastRebaseEpoch = uint64(block.timestamp);
 
-        return totalSupply();
+        uint _totalSupply = totalSupply();
+        LogTokenRebase(_lastRebaseEpoch, _lastRebaseResult, _totalSupply);
+
+        return _totalSupply;
     }
 
     /**
@@ -83,7 +75,7 @@ contract TautrinoToken is ERC20Detailed {
      */
 
     function totalSupply() public override view returns (uint) {
-        return _baseTotalSupply * (2 ** uint256(_factor2));
+        return _baseTotalSupply.mul(2 ** _factor2);
     }
 
     /**
@@ -92,7 +84,7 @@ contract TautrinoToken is ERC20Detailed {
      */
 
     function balanceOf(address who) public override view returns (uint) {
-        return _baseBalances[who].mul(2 ** uint256(_factor2));
+        return _baseBalances[who].mul(2 ** _factor2);
     }
 
     /**
@@ -103,7 +95,7 @@ contract TautrinoToken is ERC20Detailed {
     */
 
     function transfer(address to, uint value) public override returns (bool) {
-        uint merValue = value.div(2 ** uint256(_factor2));
+        uint merValue = value.div(2 ** _factor2);
         _baseBalances[msg.sender] = _baseBalances[msg.sender].sub(merValue);
         _baseBalances[to] = _baseBalances[to].add(merValue);
         emit Transfer(msg.sender, to, value);
@@ -131,7 +123,7 @@ contract TautrinoToken is ERC20Detailed {
     function transferFrom(address from, address to, uint value) public override returns (bool) {
         _allowedFragments[from][msg.sender] = _allowedFragments[from][msg.sender].sub(value);
 
-        uint merValue = value.div(2 ** uint256(_factor2));
+        uint merValue = value.div(2 ** _factor2);
         _baseBalances[from] = _baseBalances[from].sub(merValue);
         _baseBalances[to] = _baseBalances[to].add(merValue);
         emit Transfer(from, to, value);

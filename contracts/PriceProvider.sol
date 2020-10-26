@@ -1,8 +1,9 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.6;
 
-contract PriceProvider {
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-    address public governance;
+contract PriceProvider is Ownable {
+
     address public manager;
 
     string public providerName;
@@ -16,8 +17,7 @@ contract PriceProvider {
      * @param _manager Address of price manager.
      */
 
-    constructor(string memory _providerName, address _manager, bool _isProvable) public {
-        governance = msg.sender;
+    constructor(string memory _providerName, address _manager, bool _isProvable) public Ownable() {
         providerName = _providerName;
         manager = _manager;
         isProvable = _isProvable;
@@ -28,8 +28,7 @@ contract PriceProvider {
      * @param _manager Address of price manager.
      */
 
-    function setManager(address _manager) external {
-        require(msg.sender == governance, "governance!");
+    function setManager(address _manager) external onlyOwner {
         manager = _manager;
     }
 

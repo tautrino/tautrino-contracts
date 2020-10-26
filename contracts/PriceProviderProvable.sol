@@ -1,4 +1,4 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.6;
 
 import "./provableAPI_0.6.sol";
 import "./PriceProvider.sol";

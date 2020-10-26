@@ -1,3 +1,7 @@
 {
-  "chainLinkPriceFeed": "0x9326BFA02ADD2366b30bacB125260Af641031331"
+  "chainLinkPriceFeed": "0x9326BFA02ADD2366b30bacB125260Af641031331",
+  "uniswapFactory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+  "weth": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
+  "usdc": "0x75b0622cec14130172eae9cf166b92e5c112faff",
+  "dai": "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa"
 }

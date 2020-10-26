@@ -1,6 +1,7 @@
-pragma solidity ^0.6.8;
+pragma solidity ^0.6.6;
 
-enum RebaseResult { Win, Lose, Draw }
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./RebaseResult.sol";
 
 interface IPriceManager {
     function averagePrice() external returns (uint32);
@@ -12,13 +13,11 @@ interface ITautrinoToken {
     function rebase(RebaseResult result) external returns (uint);
 }
 
-contract Tautrino {
+contract Tautrino is Ownable {
 
-    event LogRebase(uint64 indexed epoch, uint32 ethPrice, RebaseResult tauResult, uint tauTotalSupply, RebaseResult trinoResult, uint trinoTotalSupply);
+    event LogRebase(uint64 epoch, uint32 ethPrice, RebaseResult tauResult, uint tauTotalSupply, RebaseResult trinoResult, uint trinoTotalSupply);
 
     uint64 public constant REBASE_CYCLE = 1 hours;
-
-    address public governance;
 
     ITautrinoToken public tauToken;
     ITautrinoToken public trinoToken;
@@ -39,21 +38,10 @@ contract Tautrino {
      * @param _trinoToken The address of TRINO token.
      */
 
-    constructor(address _tauToken, address _trinoToken) public {
-        governance = msg.sender;
+    constructor(address _tauToken, address _trinoToken) public Ownable() {
         tauToken = ITautrinoToken(_tauToken);
         trinoToken = ITautrinoToken(_trinoToken);
         _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE;
-    }
-
-    /**
-     * @dev Set governance.
-     * @param _governance The address of new governance.
-     */
-
-    function setGovernance(address _governance) external {
-        require(msg.sender == governance, "governance!");
-        governance = _governance;
     }
 
     /**
@@ -61,8 +49,7 @@ contract Tautrino {
      * @param _priceManager The address of new price manager.
      */
 
-    function setPriceManager(address _priceManager) external {
-        require(msg.sender == governance, "governance!");
+    function setPriceManager(address _priceManager) external onlyOwner {
         priceManager = IPriceManager(_priceManager);
     }
 
@@ -71,8 +58,7 @@ contract Tautrino {
      * @param _rebaseOffset new rebase offset.
      */
 
-    function setRebaseOffset(uint64 _rebaseOffset) external {
-        require(msg.sender == governance, "Must be governance!");
+    function setRebaseOffset(uint64 _rebaseOffset) external onlyOwner {
         rebaseOffset = _rebaseOffset;
     }
 
@@ -80,8 +66,7 @@ contract Tautrino {
      * @dev Prepare rebase - update price of price manager.
      */
 
-    function prepareRebase() external {
-        require(msg.sender == governance, "governance!");
+    function prepareRebase() external onlyOwner {
         priceManager.updatePrice();
     }
 
@@ -89,8 +74,7 @@ contract Tautrino {
      * @dev Rebase TAU and TRINO tokens.
      */
 
-    function rebase() external {
-        require(msg.sender == governance, "governance!");
+    function rebase() external onlyOwner {
         require(_nextRebaseEpoch <= uint64(block.timestamp) + rebaseOffset, "Not ready to rebase!");
 
         uint32 _ethPrice = priceManager.averagePrice();
