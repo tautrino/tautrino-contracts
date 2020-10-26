@@ -9,6 +9,8 @@ contract('TautrinoToken', async function (accounts) {
   const tauSymbol = "TAU";
   const decimals = '18';
   const initBalance = '300000000000000000000'
+  const rebasedBalance = '600000000000000000000'
+  const doubleRbasedBalance = '1200000000000000000000'
   const zeroAddress = '0x0000000000000000000000000000000000000000'
 
   let tauToken;
@@ -135,4 +137,40 @@ contract('TautrinoToken', async function (accounts) {
       });
     });
   });
+
+  describe('rebase', function() {
+    it('revert to rebase from non-tautrino', async function() {
+      await tauToken.setTautrino(accounts[1], { from: accounts[1]});
+      await catchRevert(tauToken.rebase("0", {from: accounts[0]}));
+    });
+
+    it('should rebase', async function() {
+      await tauToken.rebase("0", { from: accounts[1]});
+      expect((await tauToken.totalSupply()).toString()).to.equal(rebasedBalance);
+      expect((await tauToken.factor2()).toString()).to.equal('1');
+      expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('120000000000000000000');
+    });
+
+    it('should debase', async function() {
+      await tauToken.rebase("1", { from: accounts[1]});
+      expect((await tauToken.totalSupply()).toString()).to.equal(initBalance);
+      expect((await tauToken.factor2()).toString()).to.equal('0');
+      expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('60000000000000000000');
+    });
+
+    it('should double rebase', async function() {
+      await tauToken.rebase("0", { from: accounts[1]});
+      await tauToken.rebase("0", { from: accounts[1]});
+      expect((await tauToken.totalSupply()).toString()).to.equal(doubleRbasedBalance);
+      expect((await tauToken.factor2()).toString()).to.equal('2');
+      expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('240000000000000000000');
+    });
+
+    it('should debase', async function() {
+      await tauToken.rebase("1", { from: accounts[1]});
+      expect((await tauToken.totalSupply()).toString()).to.equal(initBalance);
+      expect((await tauToken.factor2()).toString()).to.equal('0');
+      expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('60000000000000000000');
+    });
+  })
 });

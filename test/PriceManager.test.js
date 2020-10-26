@@ -99,19 +99,4 @@ contract('PriceManager', async function (accounts) {
       await catchRevert(priceManager.removeProvider(0, {from: accounts[1]}));
     });
   });
-
-  describe('updatePrice', function() {
-    it('revert to update price from non-tautrino', async function() {
-      await catchRevert(priceManager.updatePrice({from: accounts[0]}));
-    });
-
-    it('revert to update price when no provider exists', async function() {
-      await catchRevert(priceManager.updatePrice({from: accounts[2]}));
-    });
-
-    it('should update price', async function() {
-      await priceManager.addProvider(priceProviderChainLink.address, {from: accounts[1]})
-      await priceManager.updatePrice({from: accounts[2]});
-    });
-  });
 });

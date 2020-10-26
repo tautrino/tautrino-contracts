@@ -7,11 +7,13 @@ module.exports = async function (deployer, _network) {
 
   const addresses = require("../addresses/" + _network + ".json");
 
-  await deployer.deploy(PriceProviderChainLink, addresses.chainLinkPriceFeed, priceManagerInstance.address);
-  const priceProviderChainLinkInstance = await PriceProviderChainLink.deployed();
-  await priceManagerInstance.addProvider(priceProviderChainLinkInstance.address);
+  if (_network !== "test") {
+    await deployer.deploy(PriceProviderChainLink, addresses.chainLinkPriceFeed, priceManagerInstance.address);
+    const priceProviderChainLinkInstance = await PriceProviderChainLink.deployed();
+    await priceManagerInstance.addProvider(priceProviderChainLinkInstance.address);
 
-  await deployer.deploy(PriceProviderUniswap, priceManagerInstance.address, addresses.uniswapFactory, addresses.weth, addresses.dai);
-  const PriceProviderUniswapInstance = await PriceProviderUniswap.deployed();
-  await priceManagerInstance.addProvider(PriceProviderUniswapInstance.address);
+    await deployer.deploy(PriceProviderUniswap, priceManagerInstance.address, addresses.uniswapFactory, addresses.weth, addresses.dai);
+    const PriceProviderUniswapInstance = await PriceProviderUniswap.deployed();
+    await priceManagerInstance.addProvider(PriceProviderUniswapInstance.address);
+  }
 };

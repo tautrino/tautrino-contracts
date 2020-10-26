@@ -1,3 +1,4 @@
+const ethers = require('ethers');
 const { catchRevert }  = require("./exceptionsHelpers.js");
 const { expect } = require('chai');
 require("./utils");
@@ -5,7 +6,7 @@ require("./utils");
 const Tautrino = artifacts.require('Tautrino');
 const TautrinoToken = artifacts.require('TautrinoToken');
 const PriceManager = artifacts.require('PriceManager');
-const PriceProviderChainLink = artifacts.require('PriceProviderChainLink');
+const TestPriceProvider = artifacts.require('TestPriceProvider');
 
 contract('Tautrino', async function (accounts) {
   const tauSymbol = "TAU";
@@ -17,6 +18,8 @@ contract('Tautrino', async function (accounts) {
   let tautrino;
   let priceManager;
   let nextRebaseTime;
+  let testPriceProvider1;
+  let testPriceProvider2;
 
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
@@ -27,7 +30,11 @@ contract('Tautrino', async function (accounts) {
     await tauToken.setTautrino(tautrino.address, { from: accounts[0]});
     await trinoToken.setTautrino(tautrino.address, { from: accounts[0]});
 
-    priceProviderChainLink = await PriceProviderChainLink.new("0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", priceManager.address);
+    testPriceProvider1 = await TestPriceProvider.new('41122', priceManager.address);
+    testPriceProvider2 = await TestPriceProvider.new('31122', priceManager.address);
+
+    await priceManager.addProvider(testPriceProvider1.address);
+    await priceManager.addProvider(testPriceProvider2.address);
   });
 
   describe('Default values', function() {
@@ -103,25 +110,43 @@ contract('Tautrino', async function (accounts) {
     })
   });
 
-  // describe('Rebase', function() {
-  //   it('revert to rebase from non-owner', async function() {
-  //     await catchRevert(tautrino.rebase({from: accounts[0]}));
-  //   });
+  describe('Rebase', function() {
+    it('revert to rebase from non-owner', async function() {
+      await catchRevert(tautrino.rebase({from: accounts[0]}));
+    });
 
-  //   it('revert to rebase when executed before next rebase time', async function() {
-  //     await catchRevert(tautrino.rebase({from: accounts[1]}));
-  //   });
+    it('should rebase', async function() {
+      const now = Math.trunc(Date.now() / 1000);
+      await advanceTime(nextRebaseTime - now);
+      const tx = await tautrino.rebase({from: accounts[1]});
+      const event = tx.logs.find(item => item.event === "LogRebase");
+      expect(event).to.not.a('null');
 
-  //   it('should rebase', async function() {
-  //     const now = Date.now() / 1000;
-  //     await advanceTime(nextRebaseTime - now);
-  //     await tautrino.rebase({from: accounts[1]});
+      const ethPrice = Number("0x" + event.args.ethPrice);
       
-  //     const lastPrice = (await priceManager.averagePrice({from: accounts[1]})).toString()
-  //     expect(lastPrice).to.not.equal('0');
+      expect(event.args).to.satisfy((args) => {
+        const tauResult = args.tauResult.toString();
+        const tauTotalSupply = args.tauTotalSupply.toString();
+        const trinoResult = args.trinoResult.toString();
+        const trinoTotalSupply = args.trinoTotalSupply.toString();
 
-  //     expect((await priceManager.lastPricesSize()).toString()).to.equal('1');
-  //     expect((await priceManager.lastAvgPrice()).toString()).to.equal(lastPrice);
-  //   });
-  // });
+        if (tauResult === "0") {
+          return tauTotalSupply === "600000000000000000000" && trinoResult === "1" && trinoTotalSupply === "300000000000000000000";
+        } else {
+          return tauResult === "1" && tauTotalSupply === "300000000000000000000" && trinoResult === "0" && trinoTotalSupply === "600000000000000000000";
+        }
+      });
+
+      const lastAvgPrice = (await tautrino.lastAvgPrice({from: accounts[1]})).toString();
+      expect(lastAvgPrice).to.not.equal('0').to.equal(ethPrice);
+
+      expect((await priceManager.lastPricesSize()).toString()).to.equal('2');
+      expect((await priceManager.lastAvgPrice()).toString()).to.equal(lastAvgPrice);
+    });
+
+    it('revert to rebase when executed before next rebase time', async function() {
+      await advanceTime(1800);
+      await catchRevert(tautrino.rebase({from: accounts[1]}));
+    });
+  });
 });
