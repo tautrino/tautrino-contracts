@@ -160,6 +160,7 @@ contract('TautrinoGovernance', async function (accounts) {
 
       expect((await priceManager.lastPricesSize()).toString()).to.equal('2');
       expect((await priceManager.lastAvgPrice()).toString()).to.equal(lastAvgPrice);
+      expect((await tautrinoGovernance.nextRebaseEpoch()).toString()).to.equal((nextRebaseTime + 3600).toString());
     });
 
     it('revert to rebase when executed before next rebase time', async function() {
@@ -194,6 +195,13 @@ contract('TautrinoGovernance', async function (accounts) {
       const lastAvgPrice = (await tautrinoGovernance.lastAvgPrice({from: accounts[1]})).toString();
       expect(lastAvgPrice).to.not.equal('0').to.equal(ethPrice);
       expect(lastAvgPrice).to.not.equal('0').to.equal(111222);
+      expect((await tautrinoGovernance.nextRebaseEpoch()).toString()).to.equal((nextRebaseTime + 7200).toString());
+    });
+
+    it('set nextRebaseEpoch greater than lastRebaseEpoch', async function() {
+      await advanceTime(7300);
+      await tautrinoGovernance.rebase({from: accounts[1]});
+      expect((await tautrinoGovernance.nextRebaseEpoch()).toString()).to.equal((nextRebaseTime + 7200 + 7200).toString());
     });
   });
 
@@ -233,34 +241,5 @@ contract('TautrinoGovernance', async function (accounts) {
       await advanceTime(1800);
       await catchRevert(newTautrinoGovernance.rebase({from: accounts[1]}));
     });
-
-    // it('should draw', async function() {
-    //   await priceManager.removeProvider(0);
-    //   await priceManager.removeProvider(0);
-    //   await priceManager.addProvider(testPriceProvider3.address);
-    //   await advanceTime(1800);
-    //   const tx = await tautrinoGovernance.rebase({from: accounts[1]});
-    //   const event = tx.logs.find(item => item.event === "LogRebase");
-    //   expect(event).to.not.a('null');
-
-    //   const ethPrice = Number("0x" + event.args.ethPrice);
-      
-    //   expect(event.args).to.satisfy((args) => {
-    //     const tauDrawResult = args.tauResult.toString();
-    //     const tauTotalSupply = args.tauTotalSupply.toString();
-    //     const trinoDrawResult = args.trinoResult.toString();
-    //     const trinoTotalSupply = args.trinoTotalSupply.toString();
-
-    //     if (tauResult === "0") {
-    //       return tauDrawResult === "2" && tauTotalSupply === "600000000000000000000" && trinoDrawResult === "2" && trinoTotalSupply === "300000000000000000000";
-    //     } else {
-    //       return tauDrawResult === "2" && tauTotalSupply === "300000000000000000000" && trinoDrawResult === "2" && trinoTotalSupply === "600000000000000000000";
-    //     }
-    //   });
-
-    //   const lastAvgPrice = (await tautrinoGovernance.lastAvgPrice({from: accounts[1]})).toString();
-    //   expect(lastAvgPrice).to.not.equal('0').to.equal(ethPrice);
-    //   expect(lastAvgPrice).to.not.equal('0').to.equal(111222);
-    // });
   });
 });

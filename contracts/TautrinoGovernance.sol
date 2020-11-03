@@ -91,6 +91,9 @@ contract TautrinoGovernance is Ownable {
 
         _lastRebaseEpoch = uint64(block.timestamp);
         _nextRebaseEpoch = _nextRebaseEpoch + 1 hours;
+        if (_nextRebaseEpoch <= _lastRebaseEpoch) {
+            _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE;
+        }
 
         uint _tauTotalSupply = tauToken.rebase(_lastTauRebaseResult);
         uint _trinoTotalSupply = trinoToken.rebase(_lastTrinoRebaseResult);
