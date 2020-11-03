@@ -55,9 +55,9 @@ contract TautrinoToken is ERC20Detailed, Ownable {
     function rebase(RebaseResult _result) external returns (uint) {
         require(msg.sender == tautrino, "tautrino!");
 
-        if (_result == RebaseResult.Win) { // 2x total supply
+        if (_result == RebaseResult.Double) { // 2x total supply
             _factor2 = _factor2.add(1);
-        } else if (_result == RebaseResult.Lose) { // debased
+        } else if (_result == RebaseResult.Park) { // debased
             _factor2 = 0;
         }
 

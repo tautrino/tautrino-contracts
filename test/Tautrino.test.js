@@ -20,6 +20,9 @@ contract('Tautrino', async function (accounts) {
   let nextRebaseTime;
   let testPriceProvider1;
   let testPriceProvider2;
+  let testPriceProvider3;
+  let tauResult;
+  let trinoResult;
 
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
@@ -29,9 +32,10 @@ contract('Tautrino', async function (accounts) {
 
     await tauToken.setTautrino(tautrino.address, { from: accounts[0]});
     await trinoToken.setTautrino(tautrino.address, { from: accounts[0]});
-
+    
     testPriceProvider1 = await TestPriceProvider.new('41122', priceManager.address);
     testPriceProvider2 = await TestPriceProvider.new('31122', priceManager.address);
+    testPriceProvider3 = await TestPriceProvider.new('111222', priceManager.address);
 
     await priceManager.addProvider(testPriceProvider1.address);
     await priceManager.addProvider(testPriceProvider2.address);
@@ -109,7 +113,7 @@ contract('Tautrino', async function (accounts) {
       });
     })
   });
-
+  
   describe('Rebase', function() {
     it('revert to rebase from non-owner', async function() {
       await catchRevert(tautrino.rebase({from: accounts[0]}));
@@ -125,13 +129,25 @@ contract('Tautrino', async function (accounts) {
       const ethPrice = Number("0x" + event.args.ethPrice);
       
       expect(event.args).to.satisfy((args) => {
-        const tauResult = args.tauResult.toString();
+        tauResult = args.tauResult.toString();
         const tauTotalSupply = args.tauTotalSupply.toString();
-        const trinoResult = args.trinoResult.toString();
+        trinoResult = args.trinoResult.toString();
         const trinoTotalSupply = args.trinoTotalSupply.toString();
-
-        if (tauResult === "0") {
-          return tauTotalSupply === "600000000000000000000" && trinoResult === "1" && trinoTotalSupply === "300000000000000000000";
+        
+        let even = 0;
+        let odd = 0;
+        let ethP = ethPrice;
+        while (ethP > 0) {
+          const last = ethP % 10;
+          if (last % 2 === 0) {
+            even += 1;
+          } else {
+            odd += 1;
+          }
+          ethP = ethP / 10;
+        }
+        if (even > odd) {
+          return tauResult === "0" && tauTotalSupply === "600000000000000000000" && trinoResult === "1" && trinoTotalSupply === "300000000000000000000";
         } else {
           return tauResult === "1" && tauTotalSupply === "300000000000000000000" && trinoResult === "0" && trinoTotalSupply === "600000000000000000000";
         }
@@ -147,6 +163,35 @@ contract('Tautrino', async function (accounts) {
     it('revert to rebase when executed before next rebase time', async function() {
       await advanceTime(1800);
       await catchRevert(tautrino.rebase({from: accounts[1]}));
+    });
+
+    it('should draw', async function() {
+      await priceManager.removeProvider(0);
+      await priceManager.removeProvider(0);
+      await priceManager.addProvider(testPriceProvider3.address);
+      await advanceTime(1800);
+      const tx = await tautrino.rebase({from: accounts[1]});
+      const event = tx.logs.find(item => item.event === "LogRebase");
+      expect(event).to.not.a('null');
+
+      const ethPrice = Number("0x" + event.args.ethPrice);
+      
+      expect(event.args).to.satisfy((args) => {
+        const tauDrawResult = args.tauResult.toString();
+        const tauTotalSupply = args.tauTotalSupply.toString();
+        const trinoDrawResult = args.trinoResult.toString();
+        const trinoTotalSupply = args.trinoTotalSupply.toString();
+
+        if (tauResult === "0") {
+          return tauDrawResult === "2" && tauTotalSupply === "600000000000000000000" && trinoDrawResult === "2" && trinoTotalSupply === "300000000000000000000";
+        } else {
+          return tauDrawResult === "2" && tauTotalSupply === "300000000000000000000" && trinoDrawResult === "2" && trinoTotalSupply === "600000000000000000000";
+        }
+      });
+
+      const lastAvgPrice = (await tautrino.lastAvgPrice({from: accounts[1]})).toString();
+      expect(lastAvgPrice).to.not.equal('0').to.equal(ethPrice);
+      expect(lastAvgPrice).to.not.equal('0').to.equal(111222);
     });
   });
 });

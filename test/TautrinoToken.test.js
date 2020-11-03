@@ -10,7 +10,7 @@ contract('TautrinoToken', async function (accounts) {
   const decimals = '18';
   const initBalance = '300000000000000000000'
   const rebasedBalance = '600000000000000000000'
-  const doubleRbasedBalance = '1200000000000000000000'
+  const doubleRebasedBalance = '1200000000000000000000'
   const zeroAddress = '0x0000000000000000000000000000000000000000'
 
   let tauToken;
@@ -161,7 +161,14 @@ contract('TautrinoToken', async function (accounts) {
     it('should double rebase', async function() {
       await tauToken.rebase("0", { from: accounts[1]});
       await tauToken.rebase("0", { from: accounts[1]});
-      expect((await tauToken.totalSupply()).toString()).to.equal(doubleRbasedBalance);
+      expect((await tauToken.totalSupply()).toString()).to.equal(doubleRebasedBalance);
+      expect((await tauToken.factor2()).toString()).to.equal('2');
+      expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('240000000000000000000');
+    });
+
+    it('should keep balance for draw', async function() {
+      await tauToken.rebase("2", { from: accounts[1]});
+      expect((await tauToken.totalSupply()).toString()).to.equal(doubleRebasedBalance);
       expect((await tauToken.factor2()).toString()).to.equal('2');
       expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('240000000000000000000');
     });

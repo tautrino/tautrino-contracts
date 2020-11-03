@@ -84,13 +84,13 @@ contract Tautrino is Ownable {
         }
 
         if (_even > _odd) {
-            // positive win
-            _lastTauRebaseResult = RebaseResult.Win;
-            _lastTrinoRebaseResult = RebaseResult.Lose;
+            // double balance
+            _lastTauRebaseResult = RebaseResult.Double;
+            _lastTrinoRebaseResult = RebaseResult.Park;
         } else if (_even < _odd) {
-            // negative loss
-            _lastTauRebaseResult = RebaseResult.Lose;
-            _lastTrinoRebaseResult = RebaseResult.Win;
+            // park balance
+            _lastTauRebaseResult = RebaseResult.Park;
+            _lastTrinoRebaseResult = RebaseResult.Double;
         } else {
             _lastTauRebaseResult = RebaseResult.Draw;
             _lastTrinoRebaseResult = RebaseResult.Draw;
