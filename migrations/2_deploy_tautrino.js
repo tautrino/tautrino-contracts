@@ -1,5 +1,5 @@
 const TautrinoToken = artifacts.require("TautrinoToken");
-const Tautrino = artifacts.require("Tautrino");
+const TautrinoGovernance = artifacts.require("TautrinoGovernance");
 
 module.exports = async function (deployer, _network) {
   await deployer.deploy(TautrinoToken, "TAU");
@@ -10,9 +10,9 @@ module.exports = async function (deployer, _network) {
   const trinoTokenInstance = await TautrinoToken.deployed();
   const trinoAddress = trinoTokenInstance.address;
 
-  await deployer.deploy(Tautrino, tauAddress, trinoAddress);
-  const tautrinoInstance = await Tautrino.deployed();
+  await deployer.deploy(TautrinoGovernance, tauAddress, trinoAddress);
+  const tautrinoGovernanceInstance = await TautrinoGovernance.deployed();
 
-  await tauTokenInstance.setTautrino(tautrinoInstance.address);
-  await trinoTokenInstance.setTautrino(tautrinoInstance.address);
+  await tauTokenInstance.setGovernance(tautrinoGovernanceInstance.address);
+  await trinoTokenInstance.setGovernance(tautrinoGovernanceInstance.address);
 };

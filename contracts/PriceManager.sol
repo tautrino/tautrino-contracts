@@ -30,6 +30,14 @@ contract PriceManager is Ownable {
     uint32[] public primeNumbers = [23, 41, 59, 67, 73, 89, 97]; // prime numbers to get random number
 
     /**
+     * @dev Throws if called by any account other than the governance.
+     */
+    modifier onlyTautrino() {
+        require(tautrino == msg.sender, "tautrino!");
+        _;
+    }
+
+    /**
      * @dev Constructor.
      * @param _tautrino Tautrino contract address.
      */
@@ -43,7 +51,7 @@ contract PriceManager is Ownable {
      * @param _tautrino The address of tautrino.
      */
 
-    function setTautrino(address _tautrino) external onlyOwner {
+    function setTautrino(address _tautrino) external onlyTautrino {
         tautrino = _tautrino;
     }
 
@@ -84,8 +92,7 @@ contract PriceManager is Ownable {
      * @return Calculated average price.
      */
 
-    function averagePrice() external returns (uint32) {
-        require(msg.sender == tautrino, "tautrino!");
+    function averagePrice() external onlyTautrino returns (uint32) {
         require(providers.length > 0, "No providers");
 
         delete lastPrices;

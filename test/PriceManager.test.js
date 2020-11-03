@@ -1,7 +1,7 @@
 const { catchRevert }  = require("./exceptionsHelpers.js");
 const { expect } = require('chai');
 
-const Tautrino = artifacts.require('Tautrino');
+const TautrinoGovernance = artifacts.require('TautrinoGovernance');
 const TautrinoToken = artifacts.require('TautrinoToken');
 const PriceManager = artifacts.require('PriceManager');
 const PriceProviderChainLink = artifacts.require('PriceProviderChainLink');
@@ -16,10 +16,10 @@ contract('PriceManager', async function (accounts) {
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
     trinoToken = await TautrinoToken.new(trinoSymbol, { from: accounts[0] });
-    tautrino = await Tautrino.new(tauToken.address, trinoToken.address);
+    tautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address);
 
-    await tauToken.setTautrino(tautrino.address, { from: accounts[0]});
-    await trinoToken.setTautrino(tautrino.address, { from: accounts[0]});
+    await tauToken.setGovernance(tautrinoGovernance.address, { from: accounts[0]});
+    await trinoToken.setGovernance(tautrinoGovernance.address, { from: accounts[0]});
     
     priceManager = await PriceManager.new(accounts[1]);
     priceProviderChainLink = await PriceProviderChainLink.new("0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419", priceManager.address);
@@ -53,17 +53,17 @@ contract('PriceManager', async function (accounts) {
     })
   });
 
-  describe('Tautrino test', function() {
-    it('tautrino', async function() {
+  describe('TautrinoGovernance test', function() {
+    it('tautrinoGovernance', async function() {
       expect((await priceManager.tautrino()).toString()).to.equal(accounts[1]);
     });
 
     describe('setTautrino', function() {
-      it('revert to update tautrino from non-owner', async function() {
+      it('revert to update tautrinoGovernance from non-tautrino', async function() {
         await catchRevert(priceManager.setTautrino(accounts[2], {from: accounts[0]}));
       });
 
-      it('should update tautrino', async function() {
+      it('should update tautrinoGovernance', async function() {
         await priceManager.setTautrino(accounts[2], { from: accounts[1]});
         expect((await priceManager.tautrino()).toString()).to.equal(accounts[2]);
       });

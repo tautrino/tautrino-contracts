@@ -1,10 +1,10 @@
 const PriceManager = artifacts.require("PriceManager");
-const Tautrino = artifacts.require("Tautrino");
+const TautrinoGovernance = artifacts.require("TautrinoGovernance");
 
 module.exports = async function (deployer, _network) {
-  const tautrinoInstance = await Tautrino.deployed();
-  await deployer.deploy(PriceManager, tautrinoInstance.address);
+  const tautrinoGovernanceInstance = await TautrinoGovernance.deployed();
+  await deployer.deploy(PriceManager, tautrinoGovernanceInstance.address);
 
   const priceManagerInstance = await PriceManager.deployed();
-  await tautrinoInstance.setPriceManager(priceManagerInstance.address);
+  await tautrinoGovernanceInstance.setPriceManager(priceManagerInstance.address);
 };

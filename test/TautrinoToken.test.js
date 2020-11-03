@@ -1,7 +1,7 @@
 const { catchRevert }  = require("./exceptionsHelpers.js");
 const { expect } = require('chai');
 
-const Tautrino = artifacts.require('Tautrino');
+const TautrinoGovernance = artifacts.require('TautrinoGovernance');
 const TautrinoToken = artifacts.require('TautrinoToken');
 
 contract('TautrinoToken', async function (accounts) {
@@ -14,11 +14,11 @@ contract('TautrinoToken', async function (accounts) {
   const zeroAddress = '0x0000000000000000000000000000000000000000'
 
   let tauToken;
-  let tautrino;
+  let tautrinoGovernance;
 
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
-    tautrino = await Tautrino.deployed();
+    tautrinoGovernance = await TautrinoGovernance.deployed();
   }); 
 
   describe('Default values', function() {
@@ -47,36 +47,19 @@ contract('TautrinoToken', async function (accounts) {
     });
   });
   
-  describe('Ownership test', function() {
-    it('owner', async function() {
-      expect((await tauToken.owner()).toString()).to.equal(accounts[0]);
+  describe('Governance test', function() {
+    it('governance', async function() {
+      expect((await tauToken.governance()).toString()).to.equal(accounts[0]);
     });
 
-    describe('transferOwnership', function() {
-      it('should update owner', async function() {
-        await tauToken.transferOwnership(accounts[1], { from: accounts[0]});
-        expect((await tauToken.owner()).toString()).to.equal(accounts[1]);
+    describe('setGovernance', function() {
+      it('should update governance', async function() {
+        await tauToken.setGovernance(accounts[1], { from: accounts[0]});
+        expect((await tauToken.governance()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update owner from non-owner', async function() {
-        await catchRevert(tauToken.transferOwnership(accounts[2], {from: accounts[0]}));
-      });
-    })
-  });
-
-  describe('Tautrino test', function() {
-    it('tautrino', async function() {
-      expect((await tauToken.tautrino()).toString()).to.equal(zeroAddress);
-    });
-
-    describe('setTautrino', function() {
-      it('revert to update tautrino from non-owner', async function() {
-        await catchRevert(tauToken.setTautrino(tautrino.address, {from: accounts[0]}));
-      });
-
-      it('should update tautrino', async function() {
-        await tauToken.setTautrino(tautrino.address, { from: accounts[1]});
-        expect((await tauToken.tautrino()).toString()).to.equal(tautrino.address);
+      it('revert to update governance from non-governance', async function() {
+        await catchRevert(tauToken.setGovernance(accounts[2], {from: accounts[0]}));
       });
     })
   });
@@ -139,8 +122,8 @@ contract('TautrinoToken', async function (accounts) {
   });
 
   describe('rebase', function() {
-    it('revert to rebase from non-tautrino', async function() {
-      await tauToken.setTautrino(accounts[1], { from: accounts[1]});
+    it('revert to rebase from non-tautrinoGovernance', async function() {
+      await tauToken.setGovernance(accounts[1], { from: accounts[1]});
       await catchRevert(tauToken.rebase("0", {from: accounts[0]}));
     });
 

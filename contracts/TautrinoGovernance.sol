@@ -6,13 +6,15 @@ import "./RebaseResult.sol";
 interface IPriceManager {
     function averagePrice() external returns (uint32);
     function lastAvgPrice() external view returns (uint32);
+    function setTautrino(address _tautrino) external;
 }
 
 interface ITautrinoToken {
     function rebase(RebaseResult result) external returns (uint);
+    function setGovernance(address _governance) external;
 }
 
-contract Tautrino is Ownable {
+contract TautrinoGovernance is Ownable {
 
     event LogRebase(uint64 epoch, uint32 ethPrice, RebaseResult tauResult, uint tauTotalSupply, RebaseResult trinoResult, uint trinoTotalSupply);
 
@@ -41,15 +43,6 @@ contract Tautrino is Ownable {
         tauToken = ITautrinoToken(_tauToken);
         trinoToken = ITautrinoToken(_trinoToken);
         _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE + 14 days;
-    }
-
-    /**
-     * @dev Update price manager.
-     * @param _priceManager The address of new price manager.
-     */
-
-    function setPriceManager(address _priceManager) external onlyOwner {
-        priceManager = IPriceManager(_priceManager);
     }
 
     /**
@@ -135,5 +128,29 @@ contract Tautrino is Ownable {
 
     function lastRebaseResult() public view returns (RebaseResult, RebaseResult) {
         return (_lastTauRebaseResult, _lastTrinoRebaseResult);
+    }
+
+    /**
+     * @dev Migrate governance.
+     * @param _newGovernance new TautrinoGovernance address.
+     */
+
+    function migrateGovernance(address _newGovernance) external onlyOwner {
+        require(_newGovernance != address(0), "invalid governance");
+        tauToken.setGovernance(_newGovernance);
+        trinoToken.setGovernance(_newGovernance);
+
+        if (address(priceManager) != address(0)) {
+            priceManager.setTautrino(_newGovernance);
+        }
+    }
+
+    /**
+     * @dev Update price manager.
+     * @param _priceManager The address of new price manager.
+     */
+
+    function setPriceManager(address _priceManager) external onlyOwner {
+        priceManager = IPriceManager(_priceManager);
     }
 }

@@ -2,18 +2,17 @@ pragma solidity 0.6.6;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC20Detailed.sol";
 import "./RebaseResult.sol";
 
-contract TautrinoToken is ERC20Detailed, Ownable {
+contract TautrinoToken is ERC20Detailed {
 
     using SafeMath for uint;
     using Address for address;
 
     event LogTokenRebase(uint64 epoch, RebaseResult result, uint totalSupply);
 
-    address public tautrino;
+    address public governance;
 
     uint private _baseTotalSupply;
     uint256 private _factor2;
@@ -27,11 +26,20 @@ contract TautrinoToken is ERC20Detailed, Ownable {
     mapping (address => mapping (address => uint)) private _allowedFragments;
 
     /**
+     * @dev Throws if called by any account other than the governance.
+     */
+    modifier onlyGovernance() {
+        require(governance == msg.sender, "governance!");
+        _;
+    }
+
+    /**
      * @dev Constructor.
      * @param symbol symbol of token - TAU or TRINO.
      */
 
-    constructor(string memory symbol) public ERC20Detailed("Tautrino", symbol, 18) Ownable() {
+    constructor(string memory symbol) public ERC20Detailed("Tautrino", symbol, 18) {
+        governance = msg.sender;
         _baseTotalSupply = 300 * (10**uint(decimals()));
         _baseBalances[msg.sender] = totalSupply();
         _factor2 = 0;
@@ -39,12 +47,12 @@ contract TautrinoToken is ERC20Detailed, Ownable {
     }
 
     /**
-     * @dev Update tautrino.
-     * @param _tautrino The address of tautrino.
+     * @dev Update governance.
+     * @param _governance The address of governance.
      */
 
-    function setTautrino(address _tautrino) external onlyOwner {
-        tautrino = _tautrino;
+    function setGovernance(address _governance) external onlyGovernance {
+        governance = _governance;
     }
 
     /**
@@ -52,9 +60,7 @@ contract TautrinoToken is ERC20Detailed, Ownable {
      * @return The total number of fragments after the supply adjustment.
      */
 
-    function rebase(RebaseResult _result) external returns (uint) {
-        require(msg.sender == tautrino, "tautrino!");
-
+    function rebase(RebaseResult _result) external onlyGovernance returns (uint) {
         if (_result == RebaseResult.Double) { // 2x total supply
             _factor2 = _factor2.add(1);
         } else if (_result == RebaseResult.Park) { // debased
