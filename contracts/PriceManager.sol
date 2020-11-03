@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity 0.6.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -97,7 +97,7 @@ contract PriceManager is Ownable {
                 providers[i].update();
             }
             uint32 _price = providers[i].lastPrice();
-            uint _x = uint(keccak256(abi.encodePacked(_price, block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))).mod(uint(primeNumbers[i])) + 1;
+            uint _x = uint(keccak256(abi.encodePacked(_price, block.coinbase, block.timestamp, block.difficulty, blockhash(block.number)))).mod(uint(primeNumbers[i])).add(1);
 
             lastPrices.push(Price({
                 provider: providers[i].providerName(),
@@ -105,8 +105,8 @@ contract PriceManager is Ownable {
                 price: _price,
                 x: uint32(_x)
             }));
-            _priceSum += uint(_price).mul(_x);
-            _xSum += _x;
+            _priceSum = _priceSum.add(uint(_price).mul(_x));
+            _xSum = _xSum.add(_x);
         }
 
         require(_priceSum > 0, "Price is not updated yet");

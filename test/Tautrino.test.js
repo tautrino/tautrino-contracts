@@ -40,7 +40,7 @@ contract('Tautrino', async function (accounts) {
   describe('Default values', function() {
     it('nextRebaseEpoch', async function() {
       const now = Date.now() / 1000;
-      nextRebaseTime = now - now % 3600 + 3600;
+      nextRebaseTime = now - now % 3600 + 3600 + 3600 * 24 * 14;
       expect((await tautrino.nextRebaseEpoch()).toString()).to.equal(nextRebaseTime.toString());
     });
 

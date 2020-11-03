@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity 0.6.6;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -56,7 +56,7 @@ contract TautrinoToken is ERC20Detailed, Ownable {
         require(msg.sender == tautrino, "tautrino!");
 
         if (_result == RebaseResult.Win) { // 2x total supply
-            _factor2 += 1;
+            _factor2 = _factor2.add(1);
         } else if (_result == RebaseResult.Lose) { // debased
             _factor2 = 0;
         }

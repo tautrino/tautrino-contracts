@@ -1,4 +1,4 @@
-pragma solidity ^0.6.6;
+pragma solidity 0.6.6;
 
 import './PriceProvider.sol';
 import './ERC20Detailed.sol';
@@ -68,12 +68,16 @@ contract PriceProviderUniswap is PriceProvider {
     }
 
     /**
-     * @return Last ethereum price.
+     * @return price - Last ethereum price.
      */
 
-    function lastPrice() public override view returns (uint32) {
+    function lastPrice() public override view returns (uint32 price) {
         uint amountOut = priceAverage.mul(1 ether).decode144();
-        uint32 price = uint32(amountOut.div(10 ** uint(ERC20Detailed(stableToken).decimals() - decimals)));
-        return price;
+        uint8 stableTokenDecimals = ERC20Detailed(stableToken).decimals();
+        if (stableTokenDecimals >= decimals) {
+            price = uint32(amountOut.div(10 ** uint(stableTokenDecimals - decimals)));
+        } else {
+            price = uint32(amountOut.mul(10 ** uint(decimals - stableTokenDecimals)));
+        }
     }
 }
