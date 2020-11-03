@@ -39,10 +39,10 @@ contract TautrinoGovernance is Ownable {
      * @param _trinoToken The address of TRINO token.
      */
 
-    constructor(address _tauToken, address _trinoToken) public Ownable() {
+    constructor(address _tauToken, address _trinoToken, uint64 _delay) public Ownable() {
         tauToken = ITautrinoToken(_tauToken);
         trinoToken = ITautrinoToken(_trinoToken);
-        _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE + 14 days;
+        _nextRebaseEpoch = uint64(block.timestamp - block.timestamp % 3600) + REBASE_CYCLE + _delay;
     }
 
     /**

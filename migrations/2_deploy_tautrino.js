@@ -10,7 +10,8 @@ module.exports = async function (deployer, _network) {
   const trinoTokenInstance = await TautrinoToken.deployed();
   const trinoAddress = trinoTokenInstance.address;
 
-  await deployer.deploy(TautrinoGovernance, tauAddress, trinoAddress);
+  const delay = _network === "mainnet" ? 14 * 24 * 3600 : 0;
+  await deployer.deploy(TautrinoGovernance, tauAddress, trinoAddress, delay);
   const tautrinoGovernanceInstance = await TautrinoGovernance.deployed();
 
   await tauTokenInstance.setGovernance(tautrinoGovernanceInstance.address);

@@ -28,7 +28,7 @@ contract('TautrinoGovernance', async function (accounts) {
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
     trinoToken = await TautrinoToken.new(trinoSymbol, { from: accounts[0] });
-    tautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address);
+    tautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address, 14 * 24 * 3600);
     priceManager = await PriceManager.new(tautrinoGovernance.address);
 
     await tauToken.setGovernance(tautrinoGovernance.address, { from: accounts[0]});
@@ -207,7 +207,7 @@ contract('TautrinoGovernance', async function (accounts) {
 
   describe('Governance migrate test', function() {
     it('migrate', async function() {
-      newTautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address);
+      newTautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address, 14 * 24 * 3600);
       await tautrinoGovernance.migrateGovernance(newTautrinoGovernance.address, { from: accounts[1]});
       await newTautrinoGovernance.setPriceManager(priceManager.address, {from: accounts[0]});
 

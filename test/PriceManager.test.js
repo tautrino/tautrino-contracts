@@ -16,7 +16,7 @@ contract('PriceManager', async function (accounts) {
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
     trinoToken = await TautrinoToken.new(trinoSymbol, { from: accounts[0] });
-    tautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address);
+    tautrinoGovernance = await TautrinoGovernance.new(tauToken.address, trinoToken.address, 14 * 24 * 3600);
 
     await tauToken.setGovernance(tautrinoGovernance.address, { from: accounts[0]});
     await trinoToken.setGovernance(tautrinoGovernance.address, { from: accounts[0]});
