@@ -1,7 +1,7 @@
 {
   "chainLinkPriceFeed": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
   "uniswapFactory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
-  "weth": "",
-  "usdc": "",
-  "dai": ""
+  "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+  "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "dai": "0x6b175474e89094c44da98b954eedeac495271d0f"
 }

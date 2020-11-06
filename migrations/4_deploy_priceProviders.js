@@ -12,8 +12,12 @@ module.exports = async function (deployer, _network) {
     const priceProviderChainLinkInstance = await PriceProviderChainLink.deployed();
     await priceManagerInstance.addProvider(priceProviderChainLinkInstance.address);
 
+    await deployer.deploy(PriceProviderUniswap, priceManagerInstance.address, addresses.uniswapFactory, addresses.weth, addresses.usdc);
+    const priceProviderUniswapInstance = await PriceProviderUniswap.deployed();
+    await priceManagerInstance.addProvider(priceProviderUniswapInstance.address);
+
     await deployer.deploy(PriceProviderUniswap, priceManagerInstance.address, addresses.uniswapFactory, addresses.weth, addresses.dai);
-    const PriceProviderUniswapInstance = await PriceProviderUniswap.deployed();
-    await priceManagerInstance.addProvider(PriceProviderUniswapInstance.address);
+    const priceProviderUniswapInstance2 = await PriceProviderUniswap.deployed();
+    await priceManagerInstance.addProvider(priceProviderUniswapInstance2.address);
   }
 };
