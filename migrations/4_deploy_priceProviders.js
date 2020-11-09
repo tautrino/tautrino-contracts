@@ -5,9 +5,9 @@ const PriceProviderUniswap = artifacts.require("PriceProviderUniswap");
 module.exports = async function (deployer, _network) {
   const priceManagerInstance = await PriceManager.deployed();
 
-  const addresses = require("../addresses/" + _network + ".json");
+  if (! ["develop", "soliditycoverage"].includes(_network)) {
+    const addresses = require("../addresses/" + _network + ".json");
 
-  if (_network !== "test") {
     await deployer.deploy(PriceProviderChainLink, addresses.chainLinkPriceFeed, priceManagerInstance.address);
     const priceProviderChainLinkInstance = await PriceProviderChainLink.deployed();
     await priceManagerInstance.addProvider(priceProviderChainLinkInstance.address);
