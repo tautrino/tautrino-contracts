@@ -8,7 +8,6 @@ contract('TautrinoRewardPool', async function (accounts) {
   let erc20Token1;
   let erc20Token2;
   let tautrinoRewardPool;
-  const zeroAddress = '0x0000000000000000000000000000000000000000';
   const rewardBalance = '100000000000000000000';
   const rewardAmount = '50000000000000000000';
   const remainBalance = '50000000000000000000';
@@ -38,16 +37,14 @@ contract('TautrinoRewardPool', async function (accounts) {
     });
   });
 
-  describe('SetRewardToken test', function() {
-    it('revert setting reward token by anonymous', async function() {
-      await catchRevert(tautrinoRewardPool.setRewardToken(erc20Token1.address, accounts[0], {from: accounts[0]}));
+  describe('setFarm test', function() {
+    it('revert setting farming pool by anonymous', async function() {
+      await catchRevert(tautrinoRewardPool.setFarm(accounts[0], {from: accounts[0]}));
     });
 
-    it('setRewardToken by owner', async function() {
-      await tautrinoRewardPool.setRewardToken(erc20Token1.address, accounts[0], { from: accounts[1]});
-      await tautrinoRewardPool.setRewardToken(erc20Token2.address, accounts[2], { from: accounts[1]});
-      expect((await tautrinoRewardPool.wants(accounts[0])).toString()).to.equal(erc20Token1.address);
-      expect((await tautrinoRewardPool.wants(accounts[2])).toString()).to.equal(erc20Token2.address);
+    it('setFarm by owner', async function() {
+      await tautrinoRewardPool.setFarm(accounts[0], { from: accounts[1]});
+      expect((await tautrinoRewardPool.farm()).toString()).to.equal(accounts[0]);
     });
   });
 
@@ -56,21 +53,10 @@ contract('TautrinoRewardPool', async function (accounts) {
       await catchRevert(tautrinoRewardPool.withdrawReward(accounts[2], erc20Token1.address, rewardAmount, {from: accounts[2]}));
     });
 
-    it('withdrawReward by pool contract', async function() {
+    it('withdrawReward by farm', async function() {
       await tautrinoRewardPool.withdrawReward(accounts[2], erc20Token1.address, rewardAmount, { from: accounts[0]});
       expect((await erc20Token1.balanceOf(accounts[2])).toString()).to.equal(rewardAmount);
       expect((await erc20Token1.balanceOf(tautrinoRewardPool.address)).toString()).to.equal(remainBalance);
-    });
-  });
-
-  describe('removePool test', function() {
-    it('revert removing pool by anonymous', async function() {
-      await catchRevert(tautrinoRewardPool.removePool(accounts[2], {from: accounts[0]}));
-    });
-
-    it('removePool by owner', async function() {
-      await tautrinoRewardPool.removePool(accounts[0], { from: accounts[1]});
-      expect((await tautrinoRewardPool.wants(accounts[0])).toString()).to.equal(zeroAddress);
     });
   });
 

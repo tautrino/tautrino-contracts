@@ -2,7 +2,6 @@ pragma solidity 0.6.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -11,6 +10,7 @@ interface ITautrinoRewardPool {
 }
 
 contract TautrinoFarming is Ownable {
+
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -31,6 +31,7 @@ contract TautrinoFarming is Ownable {
     }
 
     PoolInfo[] public poolInfo;
+    mapping (address => bool) public tokenAdded;
 
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
 
@@ -62,14 +63,16 @@ contract TautrinoFarming is Ownable {
      * @param _rewardPerShare reward per lp share.
      */
 
-    function add(IERC20 _lpToken, address _rewardToken, uint256 _rewardPerShare) public onlyOwner {
+    function add(address _lpToken, address _rewardToken, uint256 _rewardPerShare) public onlyOwner {
+        require(tokenAdded[_lpToken] == false, "already exist!");
         poolInfo.push(PoolInfo({
-            lpToken: _lpToken,
+            lpToken: IERC20(_lpToken),
             rewardToken: _rewardToken,
             rewardPerShare: _rewardPerShare,
             totalRewardPaid: 0,
             rewardEndEpoch: 0
         }));
+        tokenAdded[_lpToken] = true;
     }
 
     /**
@@ -118,7 +121,7 @@ contract TautrinoFarming is Ownable {
 
     function deposit(uint256 _pid, uint256 _amount) external {
         PoolInfo storage pool = poolInfo[_pid];
-        require(pool.rewardEndEpoch > block.timestamp, "paused!");
+        require(pool.rewardEndEpoch == 0 || pool.rewardEndEpoch > block.timestamp, "paused!");
 
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -180,5 +183,24 @@ contract TautrinoFarming is Ownable {
             emit onClaimReward(_user, _pid, reward);
         }
         pool.userLastRewardEpoch[_user] = block.timestamp;
+    }
+
+    /**
+     * @dev last reward timestamp of user.
+     * @param _pid id of pool.
+     * @param _user user address.
+     */
+
+    function userLastRewardEpoch(uint256 _pid, address _user) external view returns (uint256) {
+        return poolInfo[_pid].userLastRewardEpoch[_user];
+    }
+
+    /**
+     * @dev set reward pool. must be called by owner
+     * @param _rewardPool new reward pool address.
+     */
+
+    function setRewardPool(ITautrinoRewardPool _rewardPool) public onlyOwner {
+        rewardPool = _rewardPool;
     }
 }

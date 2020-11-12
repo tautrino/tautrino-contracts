@@ -8,7 +8,7 @@ contract TautrinoRewardPool is Ownable() {
 
     using SafeERC20 for IERC20;
 
-    mapping (address => address) public wants;
+    address public farm;
 
     /**
      * @dev withdraw reward to user. must be called by farming pool
@@ -17,28 +17,18 @@ contract TautrinoRewardPool is Ownable() {
      * @param _amount amount of reward.
      */
 
-    function withdrawReward(address _to, address _token, uint256 _amount) external {
-        require(wants[msg.sender] == _token, "not farming pool!");
-        IERC20(_token).safeTransfer(_to, _amount);
+    function withdrawReward(address _to, IERC20 _token, uint256 _amount) external {
+        require(msg.sender == farm, "not farm!");
+        _token.safeTransfer(_to, _amount);
     }
 
     /**
-     * @dev set reward token of pool. must be called by owner
-     * @param _token address of reward token.
-     * @param _pool address of farming pool.
+     * @dev set farm. must be called by owner
+     * @param _farm address of farm.
      */
 
-    function setRewardToken(address _token, address _pool) external onlyOwner {
-        wants[_pool] = _token;
-    }
-
-    /**
-     * @dev remove pool. must be called by owner
-     * @param _pool address of farming pool.
-     */
-
-    function removePool(address _pool) external onlyOwner {
-        delete wants[_pool];
+    function setFarm(address _farm) external onlyOwner {
+        farm = _farm;
     }
 
     /**
