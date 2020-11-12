@@ -11,7 +11,7 @@ const TestPriceProvider = artifacts.require('TestPriceProvider');
 contract('TautrinoGovernance', async function (accounts) {
   const tauSymbol = "TAU";
   const trinoSymbol = "TRINO";
-  const zeroAddress = '0x0000000000000000000000000000000000000000'
+  const zeroAddress = '0x0000000000000000000000000000000000000000';
 
   let tauToken;
   let trinoToken;
@@ -73,7 +73,7 @@ contract('TautrinoGovernance', async function (accounts) {
       expect((await tautrinoGovernance.priceManager()).toString()).to.equal(zeroAddress);
     });
 
-    it('revert to update priceManager from non-owner', async function() {
+    it('revert to update priceManager by anonymous', async function() {
       await catchRevert(tautrinoGovernance.setPriceManager(priceManager.address, {from: accounts[1]}));
     });
 
@@ -89,7 +89,7 @@ contract('TautrinoGovernance', async function (accounts) {
       expect((await tautrinoGovernance.rebaseOffset()).toString()).to.equal('180');
     });
 
-    it('revert to update rebaseOffset from non-owner', async function() {
+    it('revert to update rebaseOffset by anonymous', async function() {
       await catchRevert(tautrinoGovernance.setRebaseOffset('240', {from: accounts[1]}));
     });
 
@@ -110,14 +110,14 @@ contract('TautrinoGovernance', async function (accounts) {
         expect((await tautrinoGovernance.owner()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update owner from non-owner', async function() {
+      it('revert to update owner by anonymous', async function() {
         await catchRevert(tautrinoGovernance.transferOwnership(accounts[2], {from: accounts[0]}));
       });
-    })
+    });
   });
   
   describe('Rebase', function() {
-    it('revert to rebase from non-owner', async function() {
+    it('revert to rebase by anonymous', async function() {
       await catchRevert(tautrinoGovernance.rebase({from: accounts[0]}));
     });
 
@@ -218,7 +218,7 @@ contract('TautrinoGovernance', async function (accounts) {
   });
 
   describe('Rebase after migrate', function() {
-    it('revert to rebase from non-owner', async function() {
+    it('revert to rebase by anonymous', async function() {
       await catchRevert(newTautrinoGovernance.rebase({from: accounts[1]}));
     });
 
