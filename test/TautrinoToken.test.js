@@ -8,10 +8,9 @@ contract('TautrinoToken', async function (accounts) {
   const name = "Tautrino";
   const tauSymbol = "TAU";
   const decimals = '18';
-  const initBalance = '300000000000000000000'
-  const rebasedBalance = '600000000000000000000'
-  const doubleRebasedBalance = '1200000000000000000000'
-  const zeroAddress = '0x0000000000000000000000000000000000000000'
+  const initBalance = '300000000000000000000';
+  const rebasedBalance = '600000000000000000000';
+  const doubleRebasedBalance = '1200000000000000000000';
 
   let tauToken;
   let tautrinoGovernance;
@@ -19,7 +18,7 @@ contract('TautrinoToken', async function (accounts) {
   before(async function() {
     tauToken = await TautrinoToken.new(tauSymbol, { from: accounts[0] });
     tautrinoGovernance = await TautrinoGovernance.deployed();
-  }); 
+  });
 
   describe('Default values', function() {
     it('Token name', async function() {
@@ -58,10 +57,10 @@ contract('TautrinoToken', async function (accounts) {
         expect((await tauToken.governance()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update governance from non-governance', async function() {
+      it('revert to update governance from by anonymous', async function() {
         await catchRevert(tauToken.setGovernance(accounts[2], {from: accounts[0]}));
       });
-    })
+    });
   });
 
   describe('ERC20 test', function() {
@@ -122,7 +121,7 @@ contract('TautrinoToken', async function (accounts) {
   });
 
   describe('rebase', function() {
-    it('revert to rebase from non-tautrinoGovernance', async function() {
+    it('revert to rebase from by anonymous', async function() {
       await tauToken.setGovernance(accounts[1], { from: accounts[1]});
       await catchRevert(tauToken.rebase("0", {from: accounts[0]}));
     });
@@ -162,5 +161,5 @@ contract('TautrinoToken', async function (accounts) {
       expect((await tauToken.factor2()).toString()).to.equal('0');
       expect((await tauToken.balanceOf(accounts[1])).toString()).to.equal('60000000000000000000');
     });
-  })
+  });
 });

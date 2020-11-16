@@ -26,7 +26,6 @@ contract('PriceManager', async function (accounts) {
   });
 
   describe('Default values', function() {
-
     it('lastPricesSize', async function() {
       expect((await priceManager.lastPricesSize()).toString()).to.equal('0');
     });
@@ -47,10 +46,10 @@ contract('PriceManager', async function (accounts) {
         expect((await priceManager.owner()).toString()).to.equal(accounts[1]);
       });
 
-      it('revert to update owner from non-owner', async function() {
+      it('revert to update owner by anonymous', async function() {
         await catchRevert(priceManager.transferOwnership(accounts[2], {from: accounts[0]}));
       });
-    })
+    });
   });
 
   describe('TautrinoGovernance test', function() {
@@ -59,7 +58,7 @@ contract('PriceManager', async function (accounts) {
     });
 
     describe('setTautrino', function() {
-      it('revert to update tautrinoGovernance from non-tautrino', async function() {
+      it('revert to update tautrinoGovernance by anonymous', async function() {
         await catchRevert(priceManager.setTautrino(accounts[2], {from: accounts[0]}));
       });
 
@@ -67,7 +66,7 @@ contract('PriceManager', async function (accounts) {
         await priceManager.setTautrino(accounts[2], { from: accounts[1]});
         expect((await priceManager.tautrino()).toString()).to.equal(accounts[2]);
       });
-    })
+    });
   });
 
   describe('addProvider', function() {
@@ -75,18 +74,18 @@ contract('PriceManager', async function (accounts) {
       expect((await priceManager.providerSize()).toString()).to.equal('0');
     });
 
-    it('revert to add provider from non-owner', async function() {
+    it('revert to add provider by anonymous', async function() {
       await catchRevert(priceManager.addProvider(priceProviderChainLink.address, {from: accounts[0]}));
     });
 
     it('should add provider', async function() {
-      await priceManager.addProvider(priceProviderChainLink.address, {from: accounts[1]})
+      await priceManager.addProvider(priceProviderChainLink.address, {from: accounts[1]});
       expect((await priceManager.providerSize()).toString()).to.equal('1');
     });
   });
 
   describe('removeProvider', function() {
-    it('revert to remove provider from non-owner', async function() {
+    it('revert to remove provider by anonymous', async function() {
       await catchRevert(priceManager.removeProvider(0, {from: accounts[0]}));
     });
 

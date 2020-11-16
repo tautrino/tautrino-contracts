@@ -2,16 +2,12 @@ pragma solidity 0.6.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RebaseResult.sol";
+import "./interfaces/ITautrinoToken.sol";
 
 interface IPriceManager {
     function averagePrice() external returns (uint32);
     function lastAvgPrice() external view returns (uint32);
     function setTautrino(address _tautrino) external;
-}
-
-interface ITautrinoToken {
-    function rebase(RebaseResult result) external returns (uint);
-    function setGovernance(address _governance) external;
 }
 
 contract TautrinoGovernance is Ownable {
