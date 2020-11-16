@@ -28,6 +28,7 @@ contract TautrinoFarming is Ownable {
         mapping (address => uint256) userLastRewardEpoch;   // last reward epoch of user in this pool.
         uint256 rewardPerShare;                             // Reward per share, times 1e12. See below.
         uint256 totalRewardPaid;                            // Total reward paid in this pool.
+        uint256 deposits;                                   // Current deposited amount.
         uint256 rewardEndEpoch;                             // Pool farming reward end timestamp. 0: no end
     }
 
@@ -70,6 +71,7 @@ contract TautrinoFarming is Ownable {
             rewardToken: _rewardToken,
             rewardPerShare: _rewardPerShare,
             totalRewardPaid: 0,
+            deposits: 0,
             rewardEndEpoch: 0
         }));
         tokenAdded[_lpToken] = true;
@@ -98,7 +100,7 @@ contract TautrinoFarming is Ownable {
      * @return pending reward amount.
      */
 
-    function pendingReward(uint256 _pid, address _user) external view returns (uint256) {
+    function pendingReward(uint256 _pid, address _user) public view returns (uint256) {
         uint256 factor2 = ITautrinoToken(_poolInfo[_pid].rewardToken).factor2();
         return pendingBaseReward(_pid, _user).mul(2 ** factor2);
     }
@@ -141,6 +143,7 @@ contract TautrinoFarming is Ownable {
         if(_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             user.amount = user.amount.add(_amount);
+            pool.deposits = pool.deposits.add(_amount);
         }
 
         emit onDeposit(msg.sender, _pid, _amount);
@@ -161,6 +164,7 @@ contract TautrinoFarming is Ownable {
 
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
+            pool.deposits = pool.deposits.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
         emit onWithdraw(msg.sender, _pid, _amount);
@@ -215,11 +219,12 @@ contract TautrinoFarming is Ownable {
      * @param _user user address.
      */
 
-    function userInfo(uint256 _pid, address _user) external view returns (uint256, uint256) {
+    function userInfo(uint256 _pid, address _user) external view returns (uint256, uint256, uint256) {
         UserInfo memory user = _userInfo[_pid][_user];
         uint256 factor2 = ITautrinoToken(_poolInfo[_pid].rewardToken).factor2();
-        uint256 rewardDestributed = user.rewardDebt.mul(2 ** factor2);
-        return (user.amount, rewardDestributed);
+        uint256 rewardDistributed = user.rewardDebt.mul(2 ** factor2);
+        uint256 reward = pendingReward(_pid, _user);
+        return (user.amount, rewardDistributed, reward);
     }
 
     /**
@@ -227,12 +232,12 @@ contract TautrinoFarming is Ownable {
      * @param _pid id of pool.
      */
 
-    function poolInfo(uint256 _pid) external view returns (address, address, uint256, uint256, uint256) {
+    function poolInfo(uint256 _pid) external view returns (address, address, uint256, uint256, uint256, uint256) {
         PoolInfo memory pool = _poolInfo[_pid];
         address rewardToken = pool.rewardToken;
         uint256 factor2 = ITautrinoToken(rewardToken).factor2();
-        uint256 rewardDestributed = pool.totalRewardPaid.mul(2 ** factor2);
-        return (address(pool.lpToken), rewardToken, pool.rewardPerShare, rewardDestributed, pool.rewardEndEpoch);
+        uint256 rewardDistributed = pool.totalRewardPaid.mul(2 ** factor2);
+        return (address(pool.lpToken), rewardToken, pool.rewardPerShare, rewardDistributed, pool.deposits, pool.rewardEndEpoch);
     }
 
     /**
