@@ -3,6 +3,7 @@ pragma solidity 0.6.6;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RebaseResult.sol";
 import "./interfaces/ITautrinoToken.sol";
+import "./uniswap/IUniswapV2Pair.sol";
 
 interface IPriceManager {
     function averagePrice() external returns (uint32);
@@ -20,6 +21,8 @@ contract TautrinoGovernance is Ownable {
     ITautrinoToken public trinoToken;
 
     IPriceManager public priceManager;
+
+    IUniswapV2Pair[] public tautrinoUniswapPairs;
 
     RebaseResult private _lastTauRebaseResult;
     RebaseResult private _lastTrinoRebaseResult;
@@ -94,6 +97,9 @@ contract TautrinoGovernance is Ownable {
         uint _tauTotalSupply = tauToken.rebase(_lastTauRebaseResult);
         uint _trinoTotalSupply = trinoToken.rebase(_lastTrinoRebaseResult);
 
+        for (uint i = 0; i < tautrinoUniswapPairs.length; i += 1) {
+            tautrinoUniswapPairs[i].sync();
+        }
         emit LogRebase(_lastRebaseEpoch, _ethPrice, _lastTauRebaseResult, _tauTotalSupply, _lastTrinoRebaseResult, _trinoTotalSupply);
     }
 
@@ -151,5 +157,14 @@ contract TautrinoGovernance is Ownable {
 
     function setPriceManager(address _priceManager) external onlyOwner {
         priceManager = IPriceManager(_priceManager);
+    }
+
+    /**
+     * @dev Add new TAU or TRINO Uniswap pair.
+     * @param _pair The address of pair.
+     */
+
+    function addTautrinoUniswapPair(IUniswapV2Pair _pair) external onlyOwner {
+        tautrinoUniswapPairs.push(_pair);
     }
 }
